@@ -1,0 +1,4 @@
+include README LICENSE.* MANIFEST.in ChangeLog makefile setup.py
+recursive-include share *
+recursive-include po *
+recursive-include tools *

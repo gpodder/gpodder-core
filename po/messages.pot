@@ -1,0 +1,123 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-09-29 23:10+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: bin/gpo:249 bin/gpo:519
+#, python-format
+msgid "Invalid URL: %(url)s"
+msgstr ""
+
+#: bin/gpo:262
+#, python-format
+msgid "Not subscribed to %(url)s"
+msgstr ""
+
+#: bin/gpo:266
+#, python-format
+msgid "Subscribing to %(url)s"
+msgstr ""
+
+#: bin/gpo:271
+#, python-format
+msgid "Already subscribed to %(url)s"
+msgstr ""
+
+#: bin/gpo:277
+#, python-format
+msgid "Subscription to %(url)s failed"
+msgstr ""
+
+#: bin/gpo:306
+#, python-format
+msgid "Configuration option %(key)s not found"
+msgstr ""
+
+#: bin/gpo:310
+#, python-format
+msgid "Invalid configuration option: %(key)s"
+msgstr ""
+
+#: bin/gpo:333
+#, python-format
+msgid "Removed %(url)s"
+msgstr ""
+
+#: bin/gpo:402
+msgid "Subscription suspended"
+msgstr ""
+
+#: bin/gpo:417
+#, python-format
+msgid "%(count)d new episode"
+msgid_plural "%(count)d new episodes"
+msgstr[0] ""
+msgstr[1] ""
+
+#: bin/gpo:423
+msgid "Checking for new episodes"
+msgstr ""
+
+#: bin/gpo:432
+#, python-format
+msgid "Skipping %(podcast)s"
+msgstr ""
+
+#: bin/gpo:457
+#, python-format
+msgid "Downloading %(episode)s"
+msgstr ""
+
+#: bin/gpo:475
+#, python-format
+msgid "%(count)d episode downloaded"
+msgid_plural "%(count)d episodes downloaded"
+msgstr[0] ""
+msgstr[1] ""
+
+#: bin/gpo:488
+#, python-format
+msgid "Subscription suspended: %(url)s"
+msgstr ""
+
+#: bin/gpo:500
+#, python-format
+msgid "Subscription resumed: %(url)s"
+msgstr ""
+
+#: bin/gpo:508
+msgid "No software updates available"
+msgstr ""
+
+#: bin/gpo:510
+#, python-format
+msgid "New version %(version)s available: %(url)s"
+msgstr ""
+
+#: bin/gpo:574
+#, python-format
+msgid "Syntax error: %(error)s"
+msgstr ""
+
+#: bin/gpo:668
+msgid "Incomplete command; matching commands:"
+msgstr ""
+
+#: bin/gpo:672
+msgid "Command not found"
+msgstr ""
