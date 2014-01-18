@@ -37,7 +37,8 @@ class Core(object):
                  database_class=storage.Database,
                  model_class=model.Model,
                  prefix=None,
-                 verbose=True):
+                 verbose=True,
+                 progname='gpodder'):
         self._set_socket_timeout()
 
         self.prefix = prefix
@@ -45,22 +46,37 @@ class Core(object):
             # XXX
             self.prefix = os.path.abspath('.')
 
-        # Home folder: ~/gPodder or $GPODDER_HOME (if set)
-        self.home = os.path.abspath(os.environ.get('GPODDER_HOME',
-                os.path.expanduser(os.path.join('~', 'gPodder'))))
+        home = os.path.expanduser('~')
+
+        xdg_data_home = os.environ.get('XDG_DATA_HOME',
+                os.path.join(home, '.local', 'share'))
+        xdg_config_home = os.environ.get('XDG_CONFIG_HOME',
+                os.path.join(home, '.config'))
+        xdg_cache_home = os.environ.get('XDG_CACHE_HOME',
+                os.path.join(home, '.cache'))
+
+        self.data_home = os.path.join(xdg_data_home, progname)
+        self.config_home = os.path.join(xdg_config_home, progname)
+        self.cache_home = os.path.join(xdg_cache_home, progname)
+
+        # Use $GPODDER_HOME to set a fixed config and data folder
+        if 'GPODDER_HOME' in os.environ:
+            home = os.environ['GPODDER_HOME']
+            self.data_home = self.config_home = self.cache_home = home
 
         # Setup logging
-        log.setup(self.home, verbose)
+        log.setup(self.cache_home, verbose)
         self.logger = logging.getLogger(__name__)
 
-        config_file = os.path.join(self.home, 'Settings.json')
-        database_file = os.path.join(self.home, 'Database')
-        # Downloads folder: <home>/Downloads or $GPODDER_DOWNLOAD_DIR (if set)
+        config_file = os.path.join(self.config_home, 'Settings.json')
+        database_file = os.path.join(self.data_home, 'Database')
+        # Downloads go to <data_home> or $GPODDER_DOWNLOAD_DIR
         self.downloads = os.environ.get('GPODDER_DOWNLOAD_DIR',
-                os.path.join(self.home, 'Downloads'))
+                os.path.join(self.data_home))
 
-        # Initialize the gPodder home directory
-        util.make_directory(self.home)
+        # Initialize the gPodder home directories
+        util.make_directory(self.data_home)
+        util.make_directory(self.config_home)
 
         # Open the database and configuration file
         self.db = database_class(database_file)

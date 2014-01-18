@@ -110,6 +110,12 @@
 
         export GPODDER_HOME=/media/usbdisk/gpodder-data/
 
+    By default, gPodder 4 uses the XDG Base Directory Specification
+    for determining the location of data files ($XDG_DATA_HOME) and
+    configuration files ($XDG_CONFIG_HOME):
+
+        http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
 
  [ CHANGING THE DOWNLOAD DIRECTORY ]
 
@@ -124,17 +130,19 @@
 
     Another example would be to set both environment variables:
 
-        export GPODDER_HOME=~/.config/gpodder/
-        export GPODDER_DOWNLOAD_DIR=~/Podcasts/
+        export GPODDER_HOME=~/bla/gpodder/
+        export GPODDER_DOWNLOAD_DIR=~/Music/Podcasts/
 
-    This will store the database and settings files in ~/.config/gpodder/
-    and the downloads in ~/Podcasts/. If GPODDER_DOWNLOAD_DIR is not set,
-    $GPODDER_HOME/Downloads/ will be used if it is set.
+    This will store the database and settings files in ~/bla/gpodder/
+    and the downloads in ~/Music/Podcasts/. If GPODDER_DOWNLOAD_DIR is
+    not set, $GPODDER_HOME will be used if $GPODDER_HOME is set, or
+    the XDG Base Directory (inside $XDG_DATA_HOME) otherwise.
 
 
  [ LOGGING ]
 
-    By default, gPodder writes log files to $GPODDER_HOME/Logs/ and removes
+    By default, gPodder writes log files to a folder in $XDG_CACHE_HOME (or
+    $GPODDER_HOME if it is set) and removes
     them after a certain amount of times. To avoid this behavior, you can set
     the environment variable GPODDER_WRITE_LOGS to "no", e.g:
 
