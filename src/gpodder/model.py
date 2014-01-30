@@ -302,6 +302,7 @@ class PodcastEpisode(PodcastModelObject):
             util.delete_file(filename)
 
         self.state = gpodder.STATE_DELETED
+        self.is_new = False
         self.save()
 
     def get_playback_url(self, fmt_ids=None, allow_partial=False):
