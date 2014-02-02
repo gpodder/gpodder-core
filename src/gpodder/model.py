@@ -486,6 +486,12 @@ class PodcastEpisode(PodcastModelObject):
                 (self.current_position + 10 >= self.total_time or \
                  self.current_position >= self.total_time*.99)
 
+    def report_playback_event(self, position_from, position_to, duration):
+        self.current_position = position_to
+        self.total_time = duration
+        self.current_position_updated = int(time.time())
+        self.save()
+
     def update_from(self, episode):
         for k in self.UPDATE_KEYS:
             setattr(self, k, getattr(episode, k))
