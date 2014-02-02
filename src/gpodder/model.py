@@ -402,7 +402,7 @@ class PodcastEpisode(PodcastModelObject):
                     resolved_url = util.urlopen(auth_url).geturl()
 
                     logger.info('Redirection resolved to: %s', resolved_url)
-                    episode_filename, _ = util.filename_from_url(url)
+                    episode_filename, _ = util.filename_from_url(resolved_url)
                     fn_template = util.sanitize_filename(episode_filename, self.MAX_FILENAME_LENGTH)
                 except Exception as e:
                     logger.warn('Cannot resolve redirection for %s', self.url,
