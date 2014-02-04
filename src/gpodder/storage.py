@@ -28,6 +28,7 @@ class Database:
     def __init__(self, filename):
         self.filename = filename + '.jsondb'
         self.sequence_lock = threading.Lock()
+        self.save_lock = threading.Lock()
 
         self._data = {
             'podcast': {},
@@ -88,7 +89,8 @@ class Database:
 
     def close(self):
         """Close and store outstanding changes"""
-        with util.update_file_safely(self.filename) as filename:
-            with gzip.open(filename, 'wb') as fp:
-                data = bytes(json.dumps(self._data, separators=(',', ':')), 'utf-8')
-                fp.write(data)
+        with self.save_lock:
+            with util.update_file_safely(self.filename) as filename:
+                with gzip.open(filename, 'wb') as fp:
+                    data = bytes(json.dumps(self._data, separators=(',', ':')), 'utf-8')
+                    fp.write(data)
