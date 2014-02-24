@@ -46,6 +46,7 @@ import time
 import datetime
 import threading
 import tempfile
+import platform
 
 import urllib.parse
 import urllib.request
@@ -806,12 +807,24 @@ def update_file_safely(target_filename):
     basename = os.path.basename(target_filename)
 
     tmp_filename = os.path.join(dirname, '.tmp-' + basename)
+    bak_filename = os.path.join(dirname, basename + '.bak')
     try:
         yield tmp_filename
     except Exception as e:
         logger.warn('Exception while atomic-saving file: %s', e, exc_info=True)
         delete_file(tmp_filename)
         raise
+
+    # No atomic rename on Windows (http://bugs.python.org/issue1704547)
+    if platform.system() == 'Windows':
+        if os.path.exists(target_filename):
+            if os.path.exists(bak_filename):
+                os.unlink(bak_filename)
+            os.rename(target_filename, bak_filename)
+        os.rename(tmp_filename, target_filename)
+        if os.path.exists(bak_filename):
+            os.unlink(bak_filename)
+        return
 
     os.rename(tmp_filename, target_filename)
 
