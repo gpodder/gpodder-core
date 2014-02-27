@@ -47,6 +47,20 @@
     download [URL]             Download new episodes (all or only from URL)
     pending [URL]              List new episodes (all or only from URL)
     episodes [URL]             List episodes (all or only from URL)
+    query EQL                  Query episodes based on an EQL expression
+
+                               "pending", "episodes" and "query" show an
+                               alphanumeric ID of the episode that can be
+                               used with the following commands:
+
+    mark old|new EPISODE       Mark episode as old or new (new = pending)
+    fetch EPISODE              Download a single episode now
+    rm EPISODE                 Delete episode
+    details EPISODE            Display episode details and shownotes
+
+    apply COMMAND              Apply COMMAND (mark old|new, fetch, rm,
+                               details) to episodes matched in the last
+                               query command
 
   - Configuration -
 
@@ -120,6 +134,7 @@ from gpodder import core
 from gpodder import download
 from gpodder import opml
 from gpodder import util
+from gpodder import query
 from gpodder.config import config_value_to_string
 
 def incolor(color_id, s):
@@ -163,6 +178,7 @@ class gPodderCli(object):
         self._prefixes, self._expansions = self._build_prefixes_expansions()
         self._prefixes.update({'?': 'help'})
         self._valid_commands = sorted(self._prefixes.values())
+        self._last_query_match = []
 
     def _build_prefixes_expansions(self):
         prefixes = {}
@@ -337,23 +353,23 @@ class gPodderCli(object):
     def is_episode_new(self, episode):
         return (episode.state == gpodder.STATE_NORMAL and episode.is_new)
 
-    def _episodesList(self, podcast):
-        def status_str(episode):
-            # is new
-            if self.is_episode_new(episode):
-                return ' * '
-            # is downloaded
-            if (episode.state == gpodder.STATE_DOWNLOADED):
-                return ' ▉ '
-            # is deleted
-            if (episode.state == gpodder.STATE_DELETED):
-                return ' ░ '
-    
-            return '   '
+    def _format_episode(self, episode):
+        status_str = '   '
 
-        episodes = ('%3d. %s %s' % (i+1, status_str(e), e.title)
-                for i, e in enumerate(podcast.episodes))
-        return episodes
+        if self.is_episode_new(episode):
+            # is new
+            status_str = 'NEW'
+        elif (episode.state == gpodder.STATE_DOWNLOADED):
+            # is downloaded
+            status_str = 'DL '
+        elif (episode.state == gpodder.STATE_DELETED):
+            # is deleted
+            status_str = 'DEL'
+
+        return '[%04x] %s %s (%s)' % (episode.id, status_str, episode.title, self._format_filesize(episode.file_size))
+
+    def _episodesList(self, podcast):
+        return (self._format_episode(e) for e in podcast.episodes)
 
     @FirstArgumentIsPodcastURL
     def info(self, url):
@@ -394,13 +410,44 @@ class gPodderCli(object):
         self._pager('\n'.join(output))
         return True
 
+    def query(self, *args):
+        self._last_query_match = []
+        if not args:
+            self._error(_('Usage: query EQL'))
+            return False
+
+        query_string = ' '.join(args)
+        eql = query.EQL(query_string)
+
+        output = []
+        count = 0
+        for podcast in self._model.get_podcasts():
+            have_header = False
+            for episode in podcast.episodes:
+                if eql.match(episode):
+                    if not have_header:
+                        output.append(self._format_podcast(podcast))
+                        have_header = True
+                    output.append(self._format_episode(episode))
+                    count += 1
+                    self._last_query_match.append(episode.id)
+
+        output.append(N_('%(count)d episode matched', '%(count)d episodes matched',
+                count) % {'count': count})
+        if count:
+            output.append(inblue(_('Use "apply" to apply a single-episode command')))
+        print('\n'.join(output))
+        return True
+
+    def _format_podcast(self, podcast):
+        if not podcast.pause_subscription:
+            return ' '.join(('#', ingreen(podcast.title)))
+
+        return ''.join(('#', inred(podcast.title), '-', _('Subscription suspended')))
+
     def list(self):
         for podcast in self._model.get_podcasts():
-            if not podcast.pause_subscription:
-                print('#', ingreen(podcast.title))
-            else:
-                print('#', inred(podcast.title), '-', _('Subscription suspended'))
-
+            print(self._format_podcast(podcast))
             print(podcast.url)
 
         return True
@@ -447,11 +494,108 @@ class gPodderCli(object):
                         if not podcast_printed:
                             print('#', ingreen(podcast.title))
                             podcast_printed = True
-                        print(' ', episode.title)
+                        print(' ', '[%04x]' % episode.id, episode.title)
                         count += 1
 
         print(inblue(self._pending_message(count)))
         return True
+
+    def _lookup_episode(self, episode_id):
+        try:
+            episode_id = int(episode_id, 16)
+        except Exception as e:
+            self._error(_('Invalid episode ID: %(error)s') % {'error': str(e)})
+            return None
+
+        for podcast in self._model.get_podcasts():
+            for episode in podcast.episodes:
+                if episode.id == episode_id:
+                    return episode
+
+        self._error(_('Episode ID not found: %(id)x') % {'id': episode_id})
+        return None
+
+    def mark(self, action, episode_id):
+        VALID_ACTIONS = ('new', 'old')
+        if action not in VALID_ACTIONS:
+            self._error(_('Invalid action: %(action)s. Valid actions: %(valid_actions)s') % {
+                'action': action, 'valid_actions': ', '.join(VALID_ACTIONS)})
+            return False
+
+        episode = self._lookup_episode(episode_id)
+        if episode is None:
+            return False
+
+        if action == 'old':
+            self._info(_('Episode marked as old: %(title)s') % {'title': ingreen(episode.title)})
+            episode.is_new = False
+        elif action == 'new':
+            self._info(_('Episode marked as new: %(title)s') % {'title': ingreen(episode.title)})
+            episode.is_new = True
+            if episode.is_new and episode.state == gpodder.STATE_DELETED:
+                episode.state = gpodder.STATE_NORMAL
+
+        episode.save()
+        return True
+
+    def fetch(self, episode_id):
+        episode = self._lookup_episode(episode_id)
+        if episode is None:
+            return False
+
+        self._download_episode(episode)
+        self._download_summary(1)
+        return True
+
+    def rm(self, episode_id):
+        episode = self._lookup_episode(episode_id)
+        if episode is None:
+            return False
+
+        print(inred(_('Episode deleted: %(episode)s') % {'episode': episode.title}))
+        episode.delete()
+        return True
+
+    def _format_filesize(self, num):
+        for x in ['bytes','KB','MB','GB','TB']:
+            if num < 1024.0:
+                return "%3.1f %s" % (num, x)
+            num /= 1024.0
+
+    def details(self, episode_id):
+        episode = self._lookup_episode(episode_id)
+        if episode is None:
+            return False
+
+        print('[%04x]' % episode.id, inblue(episode.title))
+        print('from', ingreen(episode.parent.title))
+        print('Size:', self._format_filesize(episode.file_size))
+        print('='*len(episode.title))
+        print(episode.description)
+        print('')
+        return True
+
+    def apply(self, *args):
+        if is_single_command:
+            self._error(_('Apply can only be used during an interactive session'))
+            return False
+
+        if not self._last_query_match:
+            self._error(_('Empty query result (use "query" first)'))
+            return False
+
+        if args not in (('fetch',), ('mark', 'new'), ('mark', 'old'), ('rm',), ('details',)):
+            self._error(_('Cannot apply this command'))
+            return False
+
+        for episode_id in self._last_query_match:
+            cmd = list(args) + ['%x' % episode_id]
+            self._parse(cmd)
+
+    def _download_summary(self, count):
+        self._info(N_('%(count)d episode downloaded',
+            '%(count)d episodes downloaded',
+            count) % {'count': count})
 
     def _download_episode(self, episode):
         self._start_action(_('Downloading %(episode)s') % {'episode': episode.title})
@@ -472,9 +616,7 @@ class gPodderCli(object):
                         self._download_episode(episode)
                         count += 1
 
-        self._info(N_('%(count)d episode downloaded',
-            '%(count)d episodes downloaded',
-            count) % {'count': count})
+        self._download_summary(count)
         return True
 
     @FirstArgumentIsPodcastURL

@@ -40,6 +40,50 @@ prefix of any given command, so usage of the full command in scripts is
 recommended (e.g. use "gpo update" and not "gpo up" in scripts and cronjobs).
 The short command prefixes are mostly useful for interactive usage.
 
+.SH QUERYING USING EQL
+.PP
+Using the
+.I query
+command allows you to use the full range of Episode Query Language expressions
+that gPodder supports. Combined with the
+.I apply
+command, this can be very powerful.
+.PP
+For example, you can mark all episodes that
+are videos, not yet downloaded, smaller than 10 MB and released in the last 7
+days as new like this (in the interactive shell mode):
+.PP
+.RS 4
+.B query video and not downloaded and mb < 10 and since < 7
+.PP
+.B apply mark new
+.RE
+.PP
+Similarly, you can mark all new episodes as old with a combination of:
+.PP
+.RS 4
+.B query new
+.PP
+.B apply mark old
+.RE
+.PP
+Delete all downloaded episodes that have been downloaded more than 15 days ago:
+.PP
+.RS 4
+.B query downloaded and age > 15
+.PP
+.B apply rm
+.RE
+.PP
+And finally, download all audio files that are shorter than 30 minutes and that
+are not yet downloaded:
+.PP
+.RS 4
+.B query audio and minutes < 30 not downloaded
+.PP
+.B apply fetch
+.RE
+
 .SH EXAMPLES
 
 .PP
