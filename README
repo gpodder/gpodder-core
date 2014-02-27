@@ -48,8 +48,9 @@
 
  [ TESTING ]
 
-    To run tests, use...
-        make tests
+    To run automated tests, use...
+
+        make test
 
     Tests in gPodder are written in two different ways:
 
