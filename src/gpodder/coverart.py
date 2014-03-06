@@ -88,9 +88,9 @@ class CoverDownloader(object):
                     raise ValueError(msg)
 
                 # Successfully downloaded the cover art - save it!
-                fp = open(filename + extension, 'wb')
-                fp.write(data)
-                fp.close()
+                with util.update_file_safely(filename + extension) as temp_filename:
+                    with open(temp_filename, 'wb') as fp:
+                        fp.write(data)
 
                 return filename + extension
             except Exception as e:
