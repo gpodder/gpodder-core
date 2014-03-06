@@ -23,6 +23,7 @@ import threading
 
 from gpodder import util
 
+
 class Database:
     def __init__(self, filename):
         self.filename = filename + '.jsondb'
@@ -91,4 +92,3 @@ class Database:
             with gzip.open(filename, 'wb') as fp:
                 data = bytes(json.dumps(self._data, separators=(',', ':')), 'utf-8')
                 fp.write(data)
-

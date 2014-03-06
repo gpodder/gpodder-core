@@ -27,14 +27,15 @@ import traceback
 
 logger = logging.getLogger(__name__)
 
+
 def setup(home=None, verbose=True):
     # Configure basic stdout logging
     STDOUT_FMT = '%(created)f [%(name)s] %(levelname)s: %(message)s'
-    logging.basicConfig(format=STDOUT_FMT,
-            level=logging.DEBUG if verbose else logging.WARNING)
+    logging.basicConfig(format=STDOUT_FMT, level=logging.DEBUG if verbose else logging.WARNING)
 
     # Replace except hook with a custom one that logs it as an error
     original_excepthook = sys.excepthook
+
     def on_uncaught_exception(exctype, value, tb):
         message = ''.join(traceback.format_exception(exctype, value, tb))
         logger.error('Uncaught exception: %s', message)
@@ -49,8 +50,7 @@ def setup(home=None, verbose=True):
             try:
                 os.makedirs(logging_directory)
             except:
-                logger.warn('Cannot create output directory: %s',
-                        logging_directory)
+                logger.warn('Cannot create output directory: %s', logging_directory)
                 return False
 
         # Keep logs around for 5 days
@@ -77,4 +77,3 @@ def setup(home=None, verbose=True):
     logger.debug('==== gPodder starts up ====')
 
     return True
-

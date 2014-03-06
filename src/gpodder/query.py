@@ -21,6 +21,7 @@ import gpodder
 import re
 import datetime
 
+
 class Matcher(object):
     """Match implementation for EQL
 
@@ -69,7 +70,8 @@ class Matcher(object):
         elif k == 'description':
             return episode.description
         elif k == 'since':
-            return (datetime.datetime.now() - datetime.datetime.fromtimestamp(episode.published)).days
+            return (datetime.datetime.now() -
+                    datetime.datetime.fromtimestamp(episode.published)).days
         elif k == 'age':
             return episode.age_in_days()
         elif k in ('minutes', 'min'):
@@ -130,7 +132,6 @@ class EQL(object):
                 print(e)
                 self._query = None
 
-
     def match(self, episode):
         if self._query is None:
             return False
@@ -161,5 +162,3 @@ def UserEQL(query):
         return EQL("'%s'" % query)
     else:
         return EQL(query)
-
-

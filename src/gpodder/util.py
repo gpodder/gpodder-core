@@ -24,7 +24,7 @@
 
 """Miscellaneous helper functions for gPodder
 
-This module provides helper and utility functions for gPodder that 
+This module provides helper and utility functions for gPodder that
 are not tied to any specific part of gPodder.
 
 """
@@ -116,17 +116,17 @@ _MIME_TYPES = dict((k, v) for v, k in _MIME_TYPE_LIST)
 _MIME_TYPES_EXT = dict(_MIME_TYPE_LIST)
 
 
-def make_directory( path):
+def make_directory(path):
     """
     Tries to create a directory if it does not exist already.
-    Returns True if the directory exists after the function 
+    Returns True if the directory exists after the function
     call, False otherwise.
     """
-    if os.path.isdir( path):
+    if os.path.isdir(path):
         return True
 
     try:
-        os.makedirs( path)
+        os.makedirs(path)
     except:
         logger.warn('Could not create directory: %s', path)
         return False
@@ -136,7 +136,7 @@ def make_directory( path):
 
 def normalize_feed_url(url):
     """
-    Converts any URL to http:// or ftp:// so that it can be 
+    Converts any URL to http:// or ftp:// so that it can be
     used with "wget". If the URL cannot be converted (invalid
     or unknown scheme), "None" is returned.
 
@@ -175,15 +175,14 @@ def normalize_feed_url(url):
     # This is a list of prefixes that you can use to minimize the amount of
     # keystrokes that you have to use.
     # Feel free to suggest other useful prefixes, and I'll add them here.
-    PREFIXES = {
-            'fb:': 'http://feeds.feedburner.com/%s',
-            'yt:': 'http://www.youtube.com/rss/user/%s/videos.rss',
-            'sc:': 'http://soundcloud.com/%s',
-            'fm4od:': 'http://onapp1.orf.at/webcam/fm4/fod/%s.xspf',
-            # YouTube playlists. To get a list of playlists per-user, use:
-            # https://gdata.youtube.com/feeds/api/users/<username>/playlists
-            'ytpl:': 'http://gdata.youtube.com/feeds/api/playlists/%s',
-    }
+    PREFIXES = {'fb:': 'http://feeds.feedburner.com/%s',
+                'yt:': 'http://www.youtube.com/rss/user/%s/videos.rss',
+                'sc:': 'http://soundcloud.com/%s',
+                'fm4od:': 'http://onapp1.orf.at/webcam/fm4/fod/%s.xspf',
+                # YouTube playlists. To get a list of playlists per-user, use:
+                # https://gdata.youtube.com/feeds/api/users/<username>/playlists
+                'ytpl:': 'http://gdata.youtube.com/feeds/api/playlists/%s',
+                }
 
     for prefix, expansion in PREFIXES.items():
         if url.startswith(prefix):
@@ -283,24 +282,25 @@ def username_password_from_url(url):
 
     return (username, password)
 
-def calculate_size( path):
+
+def calculate_size(path):
     """
-    Tries to calculate the size of a directory, including any 
-    subdirectories found. The returned value might not be 
-    correct if the user doesn't have appropriate permissions 
+    Tries to calculate the size of a directory, including any
+    subdirectories found. The returned value might not be
+    correct if the user doesn't have appropriate permissions
     to list all subdirectories of the given path.
     """
     if path is None:
         return 0
 
-    if os.path.dirname( path) == '/':
+    if os.path.dirname(path) == '/':
         return 0
 
-    if os.path.isfile( path):
-        return os.path.getsize( path)
+    if os.path.isfile(path):
+        return os.path.getsize(path)
 
-    if os.path.isdir( path) and not os.path.islink( path):
-        sum = os.path.getsize( path)
+    if os.path.isdir(path) and not os.path.islink(path):
+        sum = os.path.getsize(path)
 
         try:
             for item in os.listdir(path):
@@ -368,7 +368,7 @@ def format_date(timestamp):
         return None
 
     try:
-        diff = int( (time.time() - timestamp)/seconds_in_a_day )
+        diff = int((time.time() - timestamp)/seconds_in_a_day)
     except:
         logger.warn('Cannot convert "%s" to date.', timestamp, exc_info=True)
         return None
@@ -401,7 +401,7 @@ def delete_file(filename):
 def remove_html_tags(html):
     """
     Remove HTML tags from a string and replace numeric and
-    named entities with the corresponding character, so the 
+    named entities with the corresponding character, so the
     HTML text can be displayed in a simple text view.
     """
     if html is None:
@@ -415,7 +415,7 @@ def remove_html_tags(html):
     re_listing_tags = re.compile('<li[^>]*>', re.I)
 
     result = html
-    
+
     # Convert common HTML elements to their text equivalent
     result = re_newline_tags.sub('\n', result)
     result = re_listing_tags.sub('\n * ', result)
@@ -428,8 +428,8 @@ def remove_html_tags(html):
     result = re_unicode_entities.sub(lambda x: chr(int(x.group(1))), result)
 
     # Convert named HTML entities to their unicode character
-    result = re_html_entities.sub(lambda x: entitydefs.get(x.group(1),''), result)
-    
+    result = re_html_entities.sub(lambda x: entitydefs.get(x.group(1), ''), result)
+
     # Convert more than two newlines to two newlines
     result = re.sub('([\r\n]{2})([\r\n])+', '\\1', result)
 
@@ -508,10 +508,10 @@ def filename_from_url(url):
     from a URL, e.g. http://server.com/file.MP3?download=yes
     will result in the string ("file", ".mp3") being returned.
 
-    This function will also try to best-guess the "real" 
+    This function will also try to best-guess the "real"
     extension for a media file (audio, video) by
     trying to match an extension to these types and recurse
-    into the query string to find better matches, if the 
+    into the query string to find better matches, if the
     original extension does not resolve to a known type.
 
     http://my.net/redirect.php?my.net/file.ogg => ("file", ".ogg")
@@ -519,13 +519,12 @@ def filename_from_url(url):
     http://s/redirect.mp4?http://serv2/test.mp4 => ("test", ".mp4")
     """
     (scheme, netloc, path, para, query, fragid) = urllib.parse.urlparse(url)
-    (filename, extension) = os.path.splitext(os.path.basename( urllib.parse.unquote(path)))
+    (filename, extension) = os.path.splitext(os.path.basename(urllib.parse.unquote(path)))
 
-    if file_type_by_extension(extension) is not None and not \
-        query.startswith(scheme+'://'):
+    if file_type_by_extension(extension) is not None and not query.startswith(scheme+'://'):
         # We have found a valid extension (audio, video)
         # and the query string doesn't look like a URL
-        return ( filename, extension.lower() )
+        return (filename, extension.lower())
 
     # If the query string looks like a possible URL, try that first
     if len(query.strip()) > 0 and query.find('/') != -1:
@@ -536,13 +535,13 @@ def filename_from_url(url):
             return os.path.splitext(os.path.basename(query_url))
 
     # No exact match found, simply return the original filename & extension
-    return ( filename, extension.lower() )
+    return (filename, extension.lower())
 
 
 def file_type_by_extension(extension):
     """
-    Tries to guess the file type by looking up the filename 
-    extension from a table of known file types. Will return 
+    Tries to guess the file type by looking up the filename
+    extension from a table of known file types. Will return
     "audio", "video" or None.
 
     >>> file_type_by_extension('.aif')
@@ -578,7 +577,7 @@ def file_type_by_extension(extension):
         filetype, rest = type.split('/', 1)
         if filetype in ('audio', 'video', 'image'):
             return filetype
-    
+
     return None
 
 
@@ -713,8 +712,7 @@ def sanitize_filename(filename, max_length=0, use_ascii=False):
     assert isinstance(filename, str)
 
     if max_length > 0 and len(filename) > max_length:
-        logger.info('Limiting file/folder name "%s" to %d characters.',
-                filename, max_length)
+        logger.info('Limiting file/folder name "%s" to %d characters.', filename, max_length)
         filename = filename[:max_length]
 
     if use_ascii:
@@ -827,4 +825,3 @@ def update_file_safely(target_filename):
         return
 
     os.rename(tmp_filename, target_filename)
-

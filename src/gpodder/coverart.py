@@ -27,6 +27,7 @@ from gpodder.plugins import youtube
 
 import os
 
+
 class CoverDownloader(object):
     # File name extension dict, lists supported cover art extensions
     # Values: functions that check if some data is of that file type
@@ -65,8 +66,8 @@ class CoverDownloader(object):
 
             # We have to add username/password, because password-protected
             # feeds might keep their cover art also protected (bug 1521)
-            cover_url = util.url_add_authentication(cover_url,
-                    podcast.auth_username, podcast.auth_password)
+            cover_url = util.url_add_authentication(cover_url, podcast.auth_username,
+                                                    podcast.auth_password)
 
             try:
                 logger.info('Downloading cover art: %s', cover_url)
@@ -97,4 +98,3 @@ class CoverDownloader(object):
                 logger.warn('Cannot save cover art', exc_info=True)
 
         return None
-

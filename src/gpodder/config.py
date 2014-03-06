@@ -38,20 +38,20 @@ defaults = {
     'limit': {
         'bandwidth': {
             'enabled': False,
-            'kbps': 500.0, # maximum kB/s per download
+            'kbps': 500.0,  # maximum kB/s per download
         },
         'downloads': {
             'enabled': True,
             'concurrent': 1,
         },
-        'episodes': 200, # max episodes per feed
+        'episodes': 200,  # max episodes per feed
     },
 
     # Automatic feed updates, download removal and retry on download timeout
     'auto': {
         'update': {
             'enabled': False,
-            'frequency': 20, # minutes
+            'frequency': 20,  # minutes
         },
 
         'cleanup': {
@@ -61,7 +61,7 @@ defaults = {
             'unfinished': True,
         },
 
-        'retries': 3, # number of retries when downloads time out
+        'retries': 3,  # number of retries when downloads time out
     },
 
     'ui': {
@@ -73,8 +73,8 @@ defaults = {
 
     # XXX: Move this to a "plugins" subtree
     'youtube': {
-        'preferred_fmt_id': 18, # default fmt_id (see fallbacks in youtube.py)
-        'preferred_fmt_ids': [], # for advanced uses (custom fallback sequence)
+        'preferred_fmt_id': 18,  # default fmt_id (see fallbacks in youtube.py)
+        'preferred_fmt_ids': [],  # for advanced uses (custom fallback sequence)
     },
 }
 
@@ -90,6 +90,7 @@ def config_value_to_string(config_value):
         return config_value
     else:
         return str(config_value)
+
 
 def string_to_config_value(new_value, old_value):
     config_type = type(old_value)
@@ -108,7 +109,7 @@ class Config(object):
 
     def __init__(self, filename='gpodder.json'):
         self.__json_config = jsonconfig.JsonConfig(default=defaults,
-                on_key_changed=self._on_key_changed)
+                                                   on_key_changed=self._on_key_changed)
         self.__save_thread = None
         self.__filename = filename
         self.__observers = []
@@ -186,8 +187,7 @@ class Config(object):
                 data = open(self.__filename, 'rt').read()
                 new_keys_added = self.__json_config._restore(data)
             except:
-                logger.warn('Cannot parse config file: %s',
-                        self.__filename, exc_info=True)
+                logger.warn('Cannot parse config file: %s', self.__filename, exc_info=True)
                 new_keys_added = False
 
             if new_keys_added:
@@ -210,8 +210,8 @@ class Config(object):
             try:
                 observer(name, old_value, value)
             except Exception as exception:
-                logger.error('Error while calling observer %r: %s',
-                        observer, exception, exc_info=True)
+                logger.error('Error while calling observer %r: %s', observer, exception,
+                             exc_info=True)
 
         self.schedule_save()
 
@@ -224,4 +224,3 @@ class Config(object):
             return
 
         setattr(self.__json_config, name, value)
-

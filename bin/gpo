@@ -74,8 +74,6 @@
 
 """
 
-
-
 import sys
 import collections
 import os
@@ -131,11 +129,11 @@ is_single_command = False
 
 import gpodder
 from gpodder import core
-from gpodder import download
 from gpodder import opml
 from gpodder import util
 from gpodder import query
 from gpodder.config import config_value_to_string
+
 
 def incolor(color_id, s):
     if have_ansi and cli._config.ui.cli.colors:
@@ -143,13 +141,14 @@ def incolor(color_id, s):
     return s
 
 # ANSI Colors: red = 1, green = 2, yellow = 3, blue = 4
-inred, ingreen, inyellow, inblue = (functools.partial(incolor, x)
-        for x in range(1, 5))
+inred, ingreen, inyellow, inblue = (functools.partial(incolor, x) for x in range(1, 5))
+
 
 def FirstArgumentIsPodcastURL(function):
     """Decorator for functions that take a podcast URL as first arg"""
     setattr(function, '_first_arg_is_podcast', True)
     return function
+
 
 def get_terminal_size():
     if None in (termios, fcntl, struct):
@@ -160,6 +159,7 @@ def get_terminal_size():
     x = fcntl.ioctl(stdout, termios.TIOCGWINSZ, s)
     rows, cols, xp, yp = struct.unpack('HHHH', x)
     return rows, cols
+
 
 class gPodderCli(object):
     COLUMNS = 80
@@ -172,9 +172,8 @@ class gPodderCli(object):
         self._model = self.core.model
 
         self._current_action = ''
-        self._commands = dict((name.rstrip('_'), func)
-            for name, func in inspect.getmembers(self)
-            if inspect.ismethod(func) and not name.startswith('_'))
+        self._commands = dict((name.rstrip('_'), func) for name, func in inspect.getmembers(self)
+                              if inspect.ismethod(func) and not name.startswith('_'))
         self._prefixes, self._expansions = self._build_prefixes_expansions()
         self._prefixes.update({'?': 'help'})
         self._valid_commands = sorted(self._prefixes.values())
@@ -431,8 +430,7 @@ class gPodderCli(object):
                     count += 1
                     self._last_query_match.append(episode.id)
 
-        output.append(N_('%(count)d episode matched', '%(count)d episodes matched',
-                count) % {'count': count})
+        output.append(N_('%(count)d episode matched', '%(count)d episodes matched', count) % {'count': count})
         if count:
             output.append(inblue(_('Use "apply" to apply a single-episode command')))
         print('\n'.join(output))
@@ -460,8 +458,7 @@ class gPodderCli(object):
             self._finish_action(False)
 
     def _pending_message(self, count):
-        return N_('%(count)d new episode', '%(count)d new episodes',
-                count) % {'count': count}
+        return N_('%(count)d new episode', '%(count)d new episodes', count) % {'count': count}
 
     @FirstArgumentIsPodcastURL
     def update(self, url=None):
@@ -559,7 +556,7 @@ class gPodderCli(object):
         return True
 
     def _format_filesize(self, num):
-        for x in ['bytes','KB','MB','GB','TB']:
+        for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
             if num < 1024.0:
                 return "%3.1f %s" % (num, x)
             num /= 1024.0
@@ -595,9 +592,7 @@ class gPodderCli(object):
             self._parse(cmd)
 
     def _download_summary(self, count):
-        self._info(N_('%(count)d episode downloaded',
-            '%(count)d episodes downloaded',
-            count) % {'count': count})
+        self._info(N_('%(count)d episode downloaded', '%(count)d episodes downloaded', count) % {'count': count})
 
     def _download_episode(self, episode):
         self._start_action(_('Downloading %(episode)s') % {'episode': episode.title})
@@ -650,8 +645,8 @@ class gPodderCli(object):
         if up_to_date:
             self._info(_('No software updates available'))
         else:
-            self._info(_('New version %(version)s available: %(url)s')
-                    % {'version': latest_version, 'url': gpodder.__url__})
+            self._info(_('New version %(version)s available: %(url)s') %
+                       {'version': latest_version, 'url': gpodder.__url__})
 
     @FirstArgumentIsPodcastURL
     def rewrite(self, old_url, new_url):
@@ -717,8 +712,7 @@ class gPodderCli(object):
             try:
                 args = shlex.split(line)
             except ValueError as value_error:
-                self._error(_('Syntax error: %(error)s') %
-                        {'error': value_error})
+                self._error(_('Syntax error: %(error)s') % {'error': value_error})
                 continue
 
             try:
@@ -741,12 +735,11 @@ class gPodderCli(object):
 
     def _checkargs(self, func, command_line):
         args, varargs, keywords, defaults = inspect.getargspec(func)
-        args.pop(0) # Remove "self" from args
+        args.pop(0)  # Remove "self" from args
         defaults = defaults or ()
         minarg, maxarg = len(args)-len(defaults), len(args)
 
-        if len(command_line) < minarg or (len(command_line) > maxarg and \
-                varargs is None):
+        if len(command_line) < minarg or (len(command_line) > maxarg and varargs is None):
             self._error('Wrong argument count for %s.' % func.__name__)
             return False
 
@@ -759,7 +752,6 @@ class gPodderCli(object):
             return urls[count]
 
         return None
-
 
     def _tab_completion(self, text, count):
         """Tab completion function for readline"""
@@ -785,7 +777,6 @@ class gPodderCli(object):
                     return self._tab_completion_podcast(text, count)
 
         return None
-
 
     def _parse_single(self, command_line):
         try:
@@ -838,4 +829,3 @@ if __name__ == '__main__':
         print(__doc__, end='')
     #for loader, key in sorted((repr(value), key) for key, value in sys.modules.items()):
     #    print('%20s  -> %20r' % (key, loader))
-

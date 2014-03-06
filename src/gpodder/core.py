@@ -31,6 +31,7 @@ import os
 import logging
 import socket
 
+
 class Core(object):
     def __init__(self,
                  config_class=config.Config,
@@ -48,12 +49,9 @@ class Core(object):
 
         home = os.path.expanduser('~')
 
-        xdg_data_home = os.environ.get('XDG_DATA_HOME',
-                os.path.join(home, '.local', 'share'))
-        xdg_config_home = os.environ.get('XDG_CONFIG_HOME',
-                os.path.join(home, '.config'))
-        xdg_cache_home = os.environ.get('XDG_CACHE_HOME',
-                os.path.join(home, '.cache'))
+        xdg_data_home = os.environ.get('XDG_DATA_HOME', os.path.join(home, '.local', 'share'))
+        xdg_config_home = os.environ.get('XDG_CONFIG_HOME', os.path.join(home, '.config'))
+        xdg_cache_home = os.environ.get('XDG_CACHE_HOME', os.path.join(home, '.cache'))
 
         self.data_home = os.path.join(xdg_data_home, progname)
         self.config_home = os.path.join(xdg_config_home, progname)
@@ -71,8 +69,7 @@ class Core(object):
         config_file = os.path.join(self.config_home, 'Settings.json')
         database_file = os.path.join(self.data_home, 'Database')
         # Downloads go to <data_home> or $GPODDER_DOWNLOAD_DIR
-        self.downloads = os.environ.get('GPODDER_DOWNLOAD_DIR',
-                os.path.join(self.data_home))
+        self.downloads = os.environ.get('GPODDER_DOWNLOAD_DIR', os.path.join(self.data_home))
 
         # Initialize the gPodder home directories
         util.make_directory(self.data_home)
@@ -110,8 +107,7 @@ class Core(object):
             try:
                 __import__(plugin)
             except Exception as e:
-                self.logger.warn('Cannot load plugin "%s": %s', plugin, e,
-                        exc_info=True)
+                self.logger.warn('Cannot load plugin "%s": %s', plugin, e, exc_info=True)
 
     def save(self):
         # XXX: Although the function is called close(), this actually doesn't
@@ -126,4 +122,3 @@ class Core(object):
 
         # Close the database and store outstanding changes
         self.db.close()
-

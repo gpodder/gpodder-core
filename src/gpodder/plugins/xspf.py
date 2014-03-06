@@ -62,26 +62,22 @@ def get_metadata(url):
 
 
 class FM4OnDemandPlaylist(object):
-    CONTENT = {
-            'spezialmusik': (
-                'FM4 Sendungen',
-                'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Spezialmusik.jpg',
-                'http://fm4.orf.at/',
-                'Sendungen jeweils sieben Tage zum Nachhören.',
-            ),
-            'unlimited': (
-                'FM4 Unlimited',
-                'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Unlimited.jpg',
-                'http://fm4.orf.at/unlimited',
-                'Montag bis Freitag (14-15 Uhr)',
-            ),
-            'soundpark': (
-                'FM4 Soundpark',
-                'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Soundpark.jpg',
-                'http://fm4.orf.at/soundpark',
-                'Nacht von Sonntag auf Montag (1-6 Uhr)',
-            ),
-    }
+    CONTENT = {'spezialmusik': ('FM4 Sendungen',
+                                'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Spezialmusik.jpg',
+                                'http://fm4.orf.at/',
+                                'Sendungen jeweils sieben Tage zum Nachhören.',
+                                ),
+               'unlimited': ('FM4 Unlimited',
+                             'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Unlimited.jpg',
+                             'http://fm4.orf.at/unlimited',
+                             'Montag bis Freitag (14-15 Uhr)',
+                             ),
+               'soundpark': ('FM4 Soundpark',
+                             'http://onapp1.orf.at/webcam/fm4/fod/SOD_Bild_Soundpark.jpg',
+                             'http://fm4.orf.at/soundpark',
+                             'Nacht von Sonntag auf Montag (1-6 Uhr)',
+                             ),
+               }
 
     @classmethod
     def get_text_contents(cls, node):
@@ -112,20 +108,16 @@ class FM4OnDemandPlaylist(object):
     def get_title(self):
         title = self.playlist.getElementsByTagName('title')[0]
         default = self.get_text_contents(title)
-        return self.CONTENT.get(self.category, \
-                (default, None, None, None))[0]
+        return self.CONTENT.get(self.category, (default, None, None, None))[0]
 
     def get_image(self):
-        return self.CONTENT.get(self.category, \
-                (None, None, None, None))[1]
+        return self.CONTENT.get(self.category, (None, None, None, None))[1]
 
     def get_link(self):
-        return self.CONTENT.get(self.category, \
-                (None, None, 'http://fm4.orf.at/', None))[2]
+        return self.CONTENT.get(self.category, (None, None, 'http://fm4.orf.at/', None))[2]
 
     def get_description(self):
-        return self.CONTENT.get(self.category, \
-                (None, None, None, 'XSPF playlist'))[3]
+        return self.CONTENT.get(self.category, (None, None, None, 'XSPF playlist'))[3]
 
     def get_payment_url(self):
         return None
@@ -158,6 +150,7 @@ class FM4OnDemandPlaylist(object):
 
         return tracks, seen_guids
 
+
 @model.register_custom_handler
 def fm4_on_demand_playlist_handler(channel, max_episodes):
     m = re.match(r'http://onapp1\.orf\.at/webcam/fm4/fod/([^/]+)\.xspf$', channel.url)
@@ -165,4 +158,3 @@ def fm4_on_demand_playlist_handler(channel, max_episodes):
     if m is not None:
         category = m.group(1)
         return FM4OnDemandPlaylist(channel.url, category)
-

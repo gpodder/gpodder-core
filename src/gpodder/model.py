@@ -41,11 +41,12 @@ import time
 import datetime
 
 import hashlib
-import collections
 import string
 
 
-class NoHandlerForURL(Exception): pass
+class NoHandlerForURL(Exception):
+    pass
+
 
 class gPodderFetcher:
     def __init__(self):
@@ -154,11 +155,13 @@ class PodcastModelObject(object):
         """
         pass
 
+
 class PodcastEpisode(PodcastModelObject):
     """holds data for one object in a channel"""
     MAX_FILENAME_LENGTH = 200
 
-    UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size', 'payment_url')
+    UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size',
+                   'payment_url')
 
     __schema__ = EpisodeColumns
     __slots__ = __schema__
@@ -231,8 +234,8 @@ class PodcastEpisode(PodcastModelObject):
                     return title
 
         # "#001: Title" -> "001: Title"
-        if (not self.parent._common_prefix and re.match('^#\d+: ',
-            self.title) and len(self.title)-1 > LEFTOVER_MIN):
+        if (not self.parent._common_prefix and re.match('^#\d+: ', self.title) and
+                len(self.title)-1 > LEFTOVER_MIN):
             return self.title[1:]
 
         if (self.parent._common_prefix is not None and
@@ -272,8 +275,8 @@ class PodcastEpisode(PodcastModelObject):
             return False
 
         return task.status in (download.DownloadTask.DOWNLOADING,
-                download.DownloadTask.QUEUED,
-                download.DownloadTask.PAUSED)
+                               download.DownloadTask.QUEUED,
+                               download.DownloadTask.PAUSED)
 
     def save(self):
         self.db.save_episode(self)
@@ -293,8 +296,7 @@ class PodcastEpisode(PodcastModelObject):
         return self.is_new and self.state == gpodder.STATE_NORMAL
 
     def age_in_days(self):
-        return util.file_age_in_days(self.local_filename(create=False,
-                check_only=True))
+        return util.file_age_in_days(self.local_filename(create=False, check_only=True))
 
     def delete(self):
         filename = self.local_filename(create=False, check_only=True)
@@ -332,16 +334,15 @@ class PodcastEpisode(PodcastModelObject):
         filename = filename.strip('.' + string.whitespace) + extension
 
         # Existing download folder names must not be used
-        existing_names = [episode.download_filename
-                for episode in self.parent.episodes
-                if episode is not self]
+        existing_names = [episode.download_filename for episode in self.parent.episodes
+                          if episode is not self]
 
         for name in util.generate_names(filename):
             if name not in existing_names:
                 return name
 
-    def local_filename(self, create, force_update=False, check_only=False,
-            template=None, return_wanted_filename=False):
+    def local_filename(self, create, force_update=False, check_only=False, template=None,
+                       return_wanted_filename=False):
         """Get (and possibly generate) the local saving filename
 
         Pass create=True if you want this function to generate a
@@ -381,8 +382,7 @@ class PodcastEpisode(PodcastModelObject):
         if not check_only and (force_update or not self.download_filename):
             # Avoid and catch gPodder bug 1440 and similar situations
             if template == '':
-                logger.warn('Empty template. Report this podcast URL %s',
-                        self.channel.url)
+                logger.warn('Empty template. Report this podcast URL %s', self.channel.url)
                 template = None
 
             # Try to find a new filename for the current file
@@ -405,8 +405,7 @@ class PodcastEpisode(PodcastModelObject):
                     episode_filename, _ = util.filename_from_url(resolved_url)
                     fn_template = util.sanitize_filename(episode_filename, self.MAX_FILENAME_LENGTH)
                 except Exception as e:
-                    logger.warn('Cannot resolve redirection for %s', self.url,
-                            exc_info=True)
+                    logger.warn('Cannot resolve redirection for %s', self.url, exc_info=True)
 
             # Use title for YouTube, Vimeo and Soundcloud downloads
             if (youtube.is_video_link(self.url) or
@@ -418,8 +417,7 @@ class PodcastEpisode(PodcastModelObject):
 
             # If the basename is empty, use the md5 hexdigest of the URL
             if not fn_template or fn_template.startswith('redirect.'):
-                logger.error('Report this feed: Podcast %s, episode %s',
-                        self.channel.url, self.url)
+                logger.error('Report this feed: Podcast %s, episode %s', self.channel.url, self.url)
                 fn_template = hashlib.md5(self.url).hexdigest()
 
             # Find a unique filename for this episode
@@ -482,9 +480,9 @@ class PodcastEpisode(PodcastModelObject):
         current position is greater than 99 percent of the
         total time or inside the last 10 seconds of a track.
         """
-        return self.current_position > 0 and self.total_time > 0 and \
-                (self.current_position + 10 >= self.total_time or \
-                 self.current_position >= self.total_time*.99)
+        return (self.current_position > 0 and self.total_time > 0 and
+                (self.current_position + 10 >= self.total_time or
+                 self.current_position >= self.total_time*.99))
 
     def report_playback_event(self, position_from, position_to, duration):
         self.current_position = position_to
@@ -517,10 +515,8 @@ class PodcastChannel(PodcastModelObject):
 
     def finalize_built_object(self):
         if self.id:
-            self.children = list(sorted(self.db.load_episodes(self,
-                self.episode_factory),
-                key=lambda e: (e.published, e.id),
-                reverse=True))
+            self.children = list(sorted(self.db.load_episodes(self, self.episode_factory),
+                                        key=lambda e: (e.published, e.id), reverse=True))
             self._determine_common_prefix()
 
     def __init__(self, model):
@@ -584,16 +580,14 @@ class PodcastChannel(PodcastModelObject):
 
                 known_files.add(filename)
 
-        existing_files = set(filename for filename in \
-                glob.glob(os.path.join(self.save_dir, '*')) \
-                if not filename.endswith('.partial'))
+        existing_files = set(filename for filename in glob.glob(os.path.join(self.save_dir, '*'))
+                             if not filename.endswith('.partial'))
 
-        ignore_files = ['folder'+ext for ext in
-                coverart.CoverDownloader.EXTENSIONS]
+        ignore_files = ['folder'+ext for ext in coverart.CoverDownloader.EXTENSIONS]
 
         external_files = existing_files.difference(list(known_files) +
-                [os.path.join(self.save_dir, ignore_file)
-                 for ignore_file in ignore_files])
+                                                   [os.path.join(self.save_dir, ignore_file)
+                                                    for ignore_file in ignore_files])
         if not external_files:
             return
 
@@ -611,8 +605,7 @@ class PodcastChannel(PodcastModelObject):
                 continue
 
             for episode in all_episodes:
-                wanted_filename = episode.local_filename(create=True, \
-                        return_wanted_filename=True)
+                wanted_filename = episode.local_filename(create=True, return_wanted_filename=True)
                 if basename == wanted_filename:
                     logger.info('Importing external download: %s', filename)
                     episode.download_filename = basename
@@ -714,8 +707,7 @@ class PodcastChannel(PodcastModelObject):
                 self.title = self.title[len(VIMEO_PREFIX):] + ' on Vimeo'
             # End YouTube- and Vimeo-specific title FIX
 
-    def _consume_metadata(self, title, link, description, cover_url,
-            payment_url):
+    def _consume_metadata(self, title, link, description, cover_url, payment_url):
         self._consume_updated_title(title)
         self.link = link
         self.description = description
@@ -728,10 +720,10 @@ class PodcastChannel(PodcastModelObject):
             return
 
         self._consume_metadata(custom_feed.get_title(),
-                custom_feed.get_link(),
-                custom_feed.get_description(),
-                custom_feed.get_image(),
-                custom_feed.get_payment_url())
+                               custom_feed.get_link(),
+                               custom_feed.get_description(),
+                               custom_feed.get_image(),
+                               custom_feed.get_payment_url())
 
         self.http_etag = custom_feed.get_etag(self.http_etag)
         self.http_last_modified = custom_feed.get_modified(self.http_last_modified)
@@ -742,14 +734,12 @@ class PodcastChannel(PodcastModelObject):
         # downloaded and that the feed does not list as downloadable anymore
         # Keep episodes that are currently being downloaded, though (bug 1534)
         if self.id is not None:
-            episodes_to_purge = [episode for episode in self.children if
-                    episode.state != gpodder.STATE_DOWNLOADED and
-                    episode.guid not in seen_guids and
-                    not episode.downloading]
+            episodes_to_purge = [episode for episode in self.children
+                                 if episode.state != gpodder.STATE_DOWNLOADED and
+                                 episode.guid not in seen_guids and not episode.downloading]
 
             for episode in episodes_to_purge:
-                logger.debug('Episode removed from feed: %s (%s)',
-                        episode.title, episode.guid)
+                logger.debug('Episode removed from feed: %s (%s)', episode.title, episode.guid)
                 self.db.delete_episode(episode)
                 self.children.remove(episode)
 
@@ -889,8 +879,7 @@ class PodcastChannel(PodcastModelObject):
                     os.rename(old_folder, new_folder)
                 else:
                     # Both folders exist -> move files and delete old folder
-                    logger.info('Moving files from %s to %s', old_folder,
-                            new_folder)
+                    logger.info('Moving files from %s to %s', old_folder, new_folder)
                     for file in glob.glob(os.path.join(old_folder, '*')):
                         shutil.move(file, new_folder)
                     logger.info('Removing %s', old_folder)
@@ -923,9 +912,8 @@ class PodcastChannel(PodcastModelObject):
         download_folder = download_folder.strip('.' + string.whitespace)
 
         # Existing download folder names must not be used
-        existing_names = [podcast.download_folder
-                for podcast in self.model.get_podcasts()
-                if podcast is not self]
+        existing_names = [podcast.download_folder for podcast in self.model.get_podcasts()
+                          if podcast is not self]
 
         for folder_name in util.generate_names(download_folder):
             if folder_name not in existing_names:
@@ -949,11 +937,9 @@ class PodcastChannel(PodcastModelObject):
                 try:
                     os.rename(old_folder, new_folder)
                 except Exception as ex:
-                    logger.info('Cannot rename old download folder: %s',
-                            old_folder, exc_info=True)
+                    logger.info('Cannot rename old download folder: %s', old_folder, exc_info=True)
 
-            logger.info('Updating download_folder of %s to %s', self.url,
-                    download_folder)
+            logger.info('Updating download_folder of %s to %s', self.url, download_folder)
             self.download_folder = download_folder
             self.save()
 
@@ -1022,4 +1008,3 @@ class Model(object):
         Returns a iterable, sorted sequence of the episodes
         """
         return sorted(episodes, key=cls.episode_sort_key, reverse=reverse)
-
