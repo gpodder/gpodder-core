@@ -27,11 +27,14 @@ from gpodder.plugins import vimeo
 
 import podcastparser
 
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
+import urllib.error
+import urllib.parse
 
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 class PodcastParserFeed(object):
     def __init__(self, channel, max_episodes):
@@ -127,7 +130,7 @@ class PodcastParserFeed(object):
 
         return new_episodes, seen_guids
 
+
 @model.register_custom_handler
 def podcast_parser_handler(channel, max_episodes):
     return PodcastParserFeed(channel, max_episodes)
-

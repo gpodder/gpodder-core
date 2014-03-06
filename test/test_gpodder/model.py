@@ -22,6 +22,7 @@ import gpodder
 
 from gpodder import model
 
+
 class TestEpisodePublishedProperties(unittest.TestCase):
     PUBLISHED_UNIXTIME = 1360666744
     PUBLISHED_SORT = '2013-02-12'
@@ -33,6 +34,7 @@ class TestEpisodePublishedProperties(unittest.TestCase):
 
     def test_sortdate(self):
         self.assertEqual(self.episode.sortdate, self.PUBLISHED_SORT)
+
 
 class TestSectionFromContentType(unittest.TestCase):
     def setUp(self):
@@ -54,4 +56,3 @@ class TestSectionFromContentType(unittest.TestCase):
     def test_more_video_than_audio(self):
         self.podcast.children = [self.audio_episode, self.video_episode, self.video_episode]
         self.assertEqual(self.podcast._get_content_type(), 'video')
-

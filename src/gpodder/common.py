@@ -41,7 +41,8 @@ def clean_up_downloads(directory, delete_partial=False):
         util.delete_file(tempfile)
 
 
-def find_partial_downloads(directory, channels, start_progress_callback, progress_callback, finish_progress_callback):
+def find_partial_downloads(directory, channels, start_progress_callback, progress_callback,
+                           finish_progress_callback):
     """Find partial downloads and match them with episodes
 
     directory - Download directory
@@ -89,6 +90,7 @@ def find_partial_downloads(directory, channels, start_progress_callback, progres
     else:
         clean_up_downloads(directory, True)
 
+
 def get_expired_episodes(channels, config):
     for channel in channels:
         for index, episode in enumerate(channel.get_episodes(gpodder.STATE_DOWNLOADED)):
@@ -99,8 +101,7 @@ def get_expired_episodes(channels, config):
             # Download strategy "Only keep latest"
             if (channel.download_strategy == channel.STRATEGY_LATEST and
                     index > 0):
-                logger.info('Removing episode (only keep latest strategy): %s',
-                        episode.title)
+                logger.info('Removing episode (only keep latest strategy): %s', episode.title)
                 yield episode
                 continue
 
@@ -128,4 +129,3 @@ def get_expired_episodes(channels, config):
                     continue
 
             yield episode
-

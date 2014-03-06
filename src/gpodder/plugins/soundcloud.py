@@ -36,8 +36,10 @@ import email
 # gPodder's consumer key for the Soundcloud API
 CONSUMER_KEY = 'zrweghtEtnZLpXf3mlm8mQ'
 
+
 def fetch_json(url):
     return json.loads(str(util.urlopen(url).read().decode('utf-8')))
+
 
 def soundcloud_parsedate(s):
     """Parse a string into a unix timestamp
@@ -47,6 +49,7 @@ def soundcloud_parsedate(s):
     """
     m = re.match(r'(\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})', s)
     return time.mktime(tuple([int(x) for x in m.groups()]+[0, 0, -1]))
+
 
 def get_param(s, param='filename', header='content-disposition'):
     """Get a parameter from a string of headers
@@ -69,6 +72,7 @@ def get_param(s, param='filename', header='content-disposition'):
 
     return None
 
+
 def get_metadata(url):
     """Get file download metadata
 
@@ -80,7 +84,7 @@ def get_metadata(url):
     headers = track_fp.info()
     filesize = headers['content-length'] or '0'
     filetype = headers['content-type'] or 'application/octet-stream'
-    headers_s = '\n'.join('%s:%s'%(k,v) for k, v in list(headers.items()))
+    headers_s = '\n'.join('%s:%s' % (k, v) for k, v in list(headers.items()))
     filename = get_param(headers_s) or os.path.basename(os.path.dirname(url))
     track_fp.close()
     return filesize, filetype, filename
@@ -93,7 +97,8 @@ class SoundcloudUser(object):
     def get_coverart(self):
         global CONSUMER_KEY
 
-        json_url = 'http://api.soundcloud.com/users/%s.json?consumer_key=%s' % (self.username, CONSUMER_KEY)
+        json_url = 'http://api.soundcloud.com/users/%s.json?consumer_key=%s' %\
+                   (self.username, CONSUMER_KEY)
         user_info = fetch_json(json_url)
         image = user_info.get('avatar_url', None)
 
@@ -106,15 +111,15 @@ class SoundcloudUser(object):
         track it can find for its user."""
         global CONSUMER_KEY
 
-        json_url = 'http://api.soundcloud.com/users/%(user)s/%(feed)s.json?filter=downloadable&consumer_key=%(consumer_key)s' \
-                % { "user":self.username, "feed":feed, "consumer_key": CONSUMER_KEY }
+        json_url = 'http://api.soundcloud.com/users/%(user)s/%(feed)s.json?' \
+                   'filter=downloadable&consumer_key=%(consumer_key)s' \
+                   % {"user": self.username, "feed": feed, "consumer_key": CONSUMER_KEY}
         tracks = (track for track in fetch_json(json_url) if track['downloadable'])
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
             url = track.get('stream_url', track['download_url']) + \
-                '?consumer_key=%(consumer_key)s' \
-                % { 'consumer_key': CONSUMER_KEY }
+                '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
             filesize, filetype, filename = get_metadata(url)
 
             yield {
@@ -127,6 +132,7 @@ class SoundcloudUser(object):
                 'guid': track.get('permalink', track.get('id')),
                 'published': soundcloud_parsedate(track.get('created_at', None)),
             }
+
 
 class SoundcloudFeed(object):
     def __init__(self, username):
@@ -175,6 +181,7 @@ class SoundcloudFeed(object):
 
         return new_episodes, seen_guids
 
+
 class SoundcloudFavFeed(SoundcloudFeed):
     def __init__(self, username):
         super(SoundcloudFavFeed, self).__init__(username)
@@ -200,6 +207,7 @@ def soundcloud_feed_handler(channel, max_episodes):
         subdomain, username = m.groups()
         return SoundcloudFeed(username)
 
+
 @model.register_custom_handler
 def soundcloud_fav_feed_handler(channel, max_episodes):
     m = re.match(r'http://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
@@ -207,4 +215,3 @@ def soundcloud_fav_feed_handler(channel, max_episodes):
     if m is not None:
         subdomain, username = m.groups()
         return SoundcloudFavFeed(username)
-

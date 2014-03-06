@@ -24,8 +24,6 @@
 #  Based on libwget.py (2005-10-29)
 #
 
-
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -36,7 +34,9 @@ from gpodder.plugins import youtube, vimeo
 
 import socket
 import threading
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 import urllib.parse
 import shutil
 import os.path
@@ -62,7 +62,7 @@ def get_header_param(headers, param, header_name):
     """
     value = None
     try:
-        headers_string = ['%s:%s'%(k,v) for k,v in list(headers.items())]
+        headers_string = ['%s:%s' % (k, v) for k, v in list(headers.items())]
         msg = email.message_from_string('\n'.join(headers_string))
         if header_name in msg:
             raw_value = msg.get_param(param, header=header_name)
@@ -72,6 +72,7 @@ def get_header_param(headers, param, header_name):
         logger.error('Cannot get %s from %s', param, header_name, exc_info=True)
 
     return value
+
 
 class ContentRange(object):
     # Based on:
@@ -175,8 +176,13 @@ class ContentRange(object):
             return cls(start, end-1, length)
 
 
-class DownloadCancelledException(Exception): pass
-class AuthenticationError(Exception): pass
+class DownloadCancelledException(Exception):
+    pass
+
+
+class AuthenticationError(Exception):
+    pass
+
 
 class gPodderDownloadHTTPError(Exception):
     def __init__(self, url, error_code, error_message):
@@ -184,15 +190,16 @@ class gPodderDownloadHTTPError(Exception):
         self.error_code = error_code
         self.error_message = error_message
 
+
 class DownloadURLOpener(urllib.request.FancyURLopener):
     version = gpodder.user_agent
 
     # Sometimes URLs are not escaped correctly - try to fix them
     # (see RFC2396; Section 2.4.3. Excluded US-ASCII Characters)
     # FYI: The omission of "%" in the list is to avoid double escaping!
-    ESCAPE_CHARS = dict((ord(c), '%%%x'%ord(c)) for c in ' <>#"{}|\\^[]`')
+    ESCAPE_CHARS = dict((ord(c), '%%%x' % ord(c)) for c in ' <>#"{}|\\^[]`')
 
-    def __init__( self, channel):
+    def __init__(self, channel):
         self.channel = channel
         self._auth_retry_counter = 0
         urllib.request.FancyURLopener.__init__(self, None)
@@ -209,26 +216,26 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
         void = fp.read()
         fp.close()
         raise gPodderDownloadHTTPError(url, errcode, errmsg)
-    
+
     def redirect_internal(self, url, fp, errcode, errmsg, headers, data):
         """ This is the exact same function that's included with urllib
             except with "void = fp.read()" commented out. """
-        
+
         if 'location' in headers:
             newurl = headers['location']
         elif 'uri' in headers:
             newurl = headers['uri']
         else:
             return
-        
+
         # This blocks forever(?) with certain servers (see bug #465)
         #void = fp.read()
         fp.close()
-        
+
         # In case the server sent a relative URL, join with original:
         newurl = urllib.parse.urljoin(self.type + ":" + url, newurl)
         return self.open(newurl)
-    
+
 # The following is based on Python's urllib.py "URLopener.retrieve"
 # Also based on http://mail.python.org/pipermail/python-list/2001-October/110069.html
 
@@ -286,7 +293,7 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
         blocknum = int(current_size/bs)
         if reporthook:
             if 'content-length' in headers:
-                size = int(headers['content-length'])  + current_size
+                size = int(headers['content-length']) + current_size
             reporthook(blocknum, bs, size)
         while read < size or size == -1:
             if size == -1:
@@ -308,13 +315,13 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
         # raise exception if actual size does not match content-length header
         if size >= 0 and read < size:
             raise urllib.error.ContentTooShortError("retrieval incomplete: got only %i out "
-                                       "of %i bytes" % (read, size), result)
+                                                    "of %i bytes" % (read, size), result)
 
         return result
 
 # end code based on urllib.py
 
-    def prompt_user_passwd( self, host, realm):
+    def prompt_user_passwd(self, host, realm):
         # Keep track of authentication attempts, fail after the third one
         self._auth_retry_counter += 1
         if self._auth_retry_counter > 3:
@@ -322,8 +329,8 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
 
         if self.channel.auth_username or self.channel.auth_password:
             logger.debug('Authenticating as "%s" to "%s" for realm "%s".',
-                    self.channel.auth_username, host, realm)
-            return ( self.channel.auth_username, self.channel.auth_password )
+                         self.channel.auth_username, host, realm)
+            return (self.channel.auth_username, self.channel.auth_password)
 
         return (None, None)
 
@@ -410,7 +417,7 @@ class DownloadQueueManager(object):
                     minimum_tasks = 0
 
                 worker = DownloadQueueWorker(self.tasks, self.__exit_callback,
-                        self.__continue_check_callback, minimum_tasks)
+                                             self.__continue_check_callback, minimum_tasks)
                 self.worker_threads.append(worker)
                 util.run_in_background(worker.run)
 
@@ -629,8 +636,7 @@ class DownloadTask(object):
         if totalSize != self.total_size and totalSize > 0:
             self.total_size = float(totalSize)
             if self.__episode.file_size != self.total_size:
-                logger.debug('Updating file size of %s to %s',
-                        self.filename, self.total_size)
+                logger.debug('Updating file size of %s to %s', self.filename, self.total_size)
                 self.__episode.file_size = self.total_size
                 self.__episode.save()
 
@@ -654,16 +660,17 @@ class DownloadTask(object):
         if count % 5 == 0:
             now = time.time()
             if self.__start_time > 0:
-                # Has rate limiting been enabled or disabled?                
+                # Has rate limiting been enabled or disabled?
                 if self.__limit_rate != self._config.limit.bandwidth.enabled:
-                    # If it has been enabled then reset base time and block count                    
+                    # If it has been enabled then reset base time and block count
                     if self._config.limit.bandwidth.enabled:
                         self.__start_time = now
                         self.__start_blocks = count
                     self.__limit_rate = self._config.limit.bandwidth.enabled
 
-                # Has the rate been changed and are we currently limiting?            
-                if self.__limit_rate_value != self._config.limit.bandwith.kbps and self.__limit_rate:
+                # Has the rate been changed and are we currently limiting?
+                if self.__limit_rate_value != self._config.limit.bandwith.kbps and \
+                        self.__limit_rate:
                     self.__start_time = now
                     self.__start_blocks = count
                     self.__limit_rate_value = self._config.limit.bandwidth.kbps
@@ -684,7 +691,8 @@ class DownloadTask(object):
             if self._config.limit.bandwidth.enabled and speed > self._config.limit.bandwidth.kbps:
                 # calculate the time that should have passed to reach
                 # the desired download rate and wait if necessary
-                should_have_passed = float((count-self.__start_blocks)*blockSize)/(self._config.limit.bandwidth.kbps*1024.0)
+                should_have_passed = (float((count-self.__start_blocks)*blockSize) /
+                                      (self._config.limit.bandwidth.kbps*1024.0))
                 if should_have_passed > passed:
                     # sleep a maximum of 10 seconds to not cause time-outs
                     delay = min(10.0, float(should_have_passed-passed))
@@ -732,14 +740,13 @@ class DownloadTask(object):
                     time.sleep(1)
 
                 try:
-                    headers, real_url = downloader.retrieve_resume(url,
-                        self.tempname, reporthook=self.status_updated)
+                    headers, real_url = downloader.retrieve_resume(url, self.tempname,
+                                                                   reporthook=self.status_updated)
                     # If we arrive here, the download was successful
                     break
                 except urllib.error.ContentTooShortError as ctse:
                     if retry < max_retries:
-                        logger.info('Content too short: %s - will retry.',
-                                url)
+                        logger.info('Content too short: %s - will retry.', url)
                         continue
                     raise
                 except socket.timeout as tmout:
@@ -749,8 +756,7 @@ class DownloadTask(object):
                     raise
                 except gPodderDownloadHTTPError as http:
                     if retry < max_retries and http.error_code in retry_codes:
-                        logger.info('HTTP error %d: %s - will retry.',
-                                http.error_code, url)
+                        logger.info('HTTP error %d: %s - will retry.', http.error_code, url)
                         continue
                     raise
 
@@ -778,33 +784,31 @@ class DownloadTask(object):
                 # a proper extension (this is needed for e.g. YouTube)
                 if not util.wrong_extension(realext):
                     real_filename = ''.join((realname, realext))
-                    self.filename = self.__episode.local_filename(create=True,
-                            force_update=True, template=real_filename)
-                    logger.info('Download was redirected (%s). New filename: %s',
-                            real_url, os.path.basename(self.filename))
+                    self.filename = self.__episode.local_filename(create=True, force_update=True,
+                                                                  template=real_filename)
+                    logger.info('Download was redirected (%s). New filename: %s', real_url,
+                                os.path.basename(self.filename))
 
             # Look at the Content-disposition header; use if if available
-            disposition_filename = get_header_param(headers, \
-                    'filename', 'content-disposition')
+            disposition_filename = get_header_param(headers, 'filename', 'content-disposition')
 
             # Some servers do send the content-disposition header, but provide
             # an empty filename, resulting in an empty string here (bug 1440)
             if disposition_filename is not None and disposition_filename != '':
                 # The server specifies a download filename - try to use it
                 disposition_filename = os.path.basename(disposition_filename)
-                self.filename = self.__episode.local_filename(create=True, \
-                        force_update=True, template=disposition_filename)
+                self.filename = self.__episode.local_filename(create=True, force_update=True,
+                                                              template=disposition_filename)
                 new_mimetype, encoding = mimetypes.guess_type(self.filename)
                 if new_mimetype is not None:
-                    logger.info('Using content-disposition mimetype: %s',
-                            new_mimetype)
+                    logger.info('Using content-disposition mimetype: %s', new_mimetype)
                     self.__episode.mime_type = new_mimetype
 
             # Re-evaluate filename and tempname to take care of podcast renames
             # while downloads are running (which will change both file names)
             self.filename = self.__episode.local_filename(create=False)
             self.tempname = os.path.join(os.path.dirname(self.filename),
-                    os.path.basename(self.tempname))
+                                         os.path.basename(self.tempname))
             shutil.move(self.tempname, self.filename)
 
             # Model- and database-related updates after a download has finished
@@ -820,14 +824,13 @@ class DownloadTask(object):
             self.error_message = 'Missing content from server'
         except IOError as ioe:
             logger.error('%s while downloading "%s": %s', ioe.strerror,
-                    self.__episode.title, ioe.filename, exc_info=True)
+                         self.__episode.title, ioe.filename, exc_info=True)
             self.status = DownloadTask.FAILED
             d = {'error': ioe.strerror, 'filename': ioe.filename}
             self.error_message = 'I/O Error: %(error)s: %(filename)s' % d
         except gPodderDownloadHTTPError as gdhe:
             logger.error('HTTP %s while downloading "%s": %s',
-                    gdhe.error_code, self.__episode.title, gdhe.error_message,
-                    exc_info=True)
+                         gdhe.error_code, self.__episode.title, gdhe.error_message, exc_info=True)
             self.status = DownloadTask.FAILED
             d = {'code': gdhe.error_code, 'message': gdhe.error_message}
             self.error_message = 'HTTP Error %(code)s: %(message)s' % d
@@ -849,4 +852,3 @@ class DownloadTask(object):
 
         # We finished, but not successfully (at least not really)
         return False
-

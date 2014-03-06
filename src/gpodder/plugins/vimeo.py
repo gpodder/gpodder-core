@@ -29,7 +29,10 @@ VIMEOCOM_RE = re.compile(r'http://vimeo\.com/(\d+)$', re.IGNORECASE)
 MOOGALOOP_RE = re.compile(r'http://vimeo\.com/moogaloop\.swf\?clip_id=(\d+)$', re.IGNORECASE)
 SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
 
-class VimeoError(BaseException): pass
+
+class VimeoError(BaseException):
+    pass
+
 
 def get_real_download_url(url):
     quality = 'sd'
@@ -60,6 +63,7 @@ def get_real_download_url(url):
     player_url = 'http://player.vimeo.com/play_redirect?%s' % params
     return player_url
 
+
 def get_vimeo_id(url):
     result = MOOGALOOP_RE.match(url)
     if result is not None:
@@ -71,8 +75,10 @@ def get_vimeo_id(url):
 
     return None
 
+
 def is_video_link(url):
     return (get_vimeo_id(url) is not None)
+
 
 def get_real_channel_url(url):
     result = VIMEOCOM_RE.match(url)
@@ -81,6 +87,6 @@ def get_real_channel_url(url):
 
     return url
 
+
 def get_real_cover(url):
     return None
-
