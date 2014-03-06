@@ -397,12 +397,11 @@ class gPodderCli(object):
     @FirstArgumentIsPodcastURL
     def episodes(self, url=None):
         output = []
-        for podcast in self._model.get_podcasts():
+        for podcast in self._get_podcasts(url):
             podcast_printed = False
-            if url is None or podcast.url == url:
-                episodes = self._episodesList(podcast)
-                episodes = '\n      '.join(episodes)
-                output.append("""
+            episodes = self._episodesList(podcast)
+            episodes = '\n      '.join(episodes)
+            output.append("""
     Episodes from %s:
       %s
 """ % (podcast.url, episodes))
@@ -468,9 +467,7 @@ class gPodderCli(object):
     def update(self, url=None):
         count = 0
         print(_('Checking for new episodes'))
-        for podcast in self._model.get_podcasts():
-            if url is not None and podcast.url != url:
-                continue
+        for podcast in self._get_podcasts(url):
 
             if not podcast.pause_subscription:
                 self._update_podcast(podcast)
@@ -483,19 +480,24 @@ class gPodderCli(object):
         print(inblue(self._pending_message(count)))
         return True
 
+    def _get_podcasts(self, url):
+        """ get either all podcasts or the one with the given URL """
+        for podcast in self._model.get_podcasts():
+            if url is None or podcast.url == url:
+                yield podcast
+
     @FirstArgumentIsPodcastURL
     def pending(self, url=None):
         count = 0
-        for podcast in self._model.get_podcasts():
+        for podcast in self._get_podcasts(url):
             podcast_printed = False
-            if url is None or podcast.url == url:
-                for episode in podcast.episodes:
-                    if self.is_episode_new(episode):
-                        if not podcast_printed:
-                            print('#', ingreen(podcast.title))
-                            podcast_printed = True
-                        print(' ', '[%04x]' % episode.id, episode.title)
-                        count += 1
+            for episode in podcast.episodes:
+                if self.is_episode_new(episode):
+                    if not podcast_printed:
+                        print('#', ingreen(podcast.title))
+                        podcast_printed = True
+                    print(' ', '[%04x]' % episode.id, episode.title)
+                    count += 1
 
         print(inblue(self._pending_message(count)))
         return True
@@ -605,16 +607,15 @@ class gPodderCli(object):
     @FirstArgumentIsPodcastURL
     def download(self, url=None):
         count = 0
-        for podcast in self._model.get_podcasts():
+        for podcast in self._get_podcasts(url):
             podcast_printed = False
-            if url is None or podcast.url == url:
-                for episode in podcast.episodes:
-                    if self.is_episode_new(episode):
-                        if not podcast_printed:
-                            print(inblue(podcast.title))
-                            podcast_printed = True
-                        self._download_episode(episode)
-                        count += 1
+            for episode in podcast.episodes:
+                if self.is_episode_new(episode):
+                    if not podcast_printed:
+                        print(inblue(podcast.title))
+                        podcast_printed = True
+                    self._download_episode(episode)
+                    count += 1
 
         self._download_summary(count)
         return True
