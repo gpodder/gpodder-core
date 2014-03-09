@@ -30,6 +30,7 @@
 
     subscribe URL [TITLE]      Subscribe to a new feed at URL (as TITLE)
     rename URL TITLE           Rename feed at URL to TITLE
+    rewrite OLDURL NEWURL      Change the feed URL of [OLDURL] to [NEWURL]
     unsubscribe URL            Unsubscribe from feed at URL
 
     import FILENAME|URL        Subscribe to all podcasts in an OPML file
@@ -70,7 +71,6 @@
 
     versioncheck               Check if a new gPodder version is available
     license                    Show the software license information
-    rewrite OLDURL NEWURL      Change the feed URL of [OLDURL] to [NEWURL]
     registry                   Print registered resolvers
     shortcuts                  List available URL shortcuts
 
@@ -249,14 +249,30 @@ class gPodderCli(object):
     # -------------------------------------------------------------------
 
     def import_(self, url):
+        """Import subscriptions from an OPML file
+
+        import http://example.com/subscriptions.opml
+
+            Import subscriptions from the given URL
+
+        import ./feeds.opml
+
+            Import subscriptions from a local file
+        """
         for channel in opml.Importer(url).items:
             self.subscribe(channel['url'], channel.get('title'))
 
     def export(self, filename):
+        """Export subscriptions to an OPML file
+
+        export ./subscriptions.opml
+
+            Export the subscriptinos to a local file
+        """
         podcasts = self._model.get_podcasts()
         opml.Exporter(filename).write(podcasts)
 
-    def get_podcast(self, url, create=False, check_only=False):
+    def _get_podcast(self, url, create=False, check_only=False):
         """Get a specific podcast by URL
 
         Returns a podcast object for the URL or None if
@@ -282,16 +298,24 @@ class gPodderCli(object):
         return None
 
     def subscribe(self, url, title=None):
+        """Subscribe to a new podcast via a URL
+
+        subscribe http://example.org/feed.rss
+
+            Subscribe to the feed at the given URL
+
+        Use {shortcuts} for a list of shortcut URLs you can use here.
+        """
         self._start_action(_('Subscribing to %(url)s') % {'url': url})
 
-        existing = self.get_podcast(url, check_only=True)
+        existing = self._get_podcast(url, check_only=True)
         if existing is not None:
             self._finish_action(skip=True)
             self._error(_('Already subscribed to %(url)s') % {'url': existing.url})
             return True
 
         try:
-            podcast = self.get_podcast(url, create=True)
+            podcast = self._get_podcast(url, create=True)
             if podcast is None:
                 self._error(_('Subscription to %(url)s failed') % {'url': url})
                 return True
@@ -318,6 +342,16 @@ class gPodderCli(object):
                 print(key, '=', value)
 
     def set(self, key=None, value=None):
+        """Get and set configuration values
+
+        set
+
+            List all configuration options and their values
+
+        set a b
+
+            Set configuration option "a" to value "b"
+        """
         if value is None:
             self._print_config(key)
             return
@@ -338,7 +372,13 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def rename(self, url, title):
-        podcast = self.get_podcast(url)
+        """Rename an existing subscription
+
+        rename http://example.org/feed.xml "Some Podcast"
+
+            Rename the subscription denoted by the URL to "Some Podcast"
+        """
+        podcast = self._get_podcast(url)
 
         if podcast is not None:
             old_title = podcast.title
@@ -349,7 +389,13 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def unsubscribe(self, url):
-        podcast = self.get_podcast(url)
+        """Remove a subscription and all downloaded episodes
+
+        unsubscribe http://example.org/episodes.rss
+
+            Remove subscription and all downloads for the given URL
+        """
+        podcast = self._get_podcast(url)
 
         if podcast is not None:
             podcast.unsubscribe()
@@ -357,13 +403,13 @@ class gPodderCli(object):
 
         return True
 
-    def is_episode_new(self, episode):
+    def _is_episode_new(self, episode):
         return (episode.state == gpodder.STATE_NORMAL and episode.is_new)
 
     def _format_episode(self, episode):
         status_str = '   '
 
-        if self.is_episode_new(episode):
+        if self._is_episode_new(episode):
             # is new
             status_str = 'NEW'
         elif (episode.state == gpodder.STATE_DOWNLOADED):
@@ -380,7 +426,13 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def info(self, url):
-        podcast = self.get_podcast(url)
+        """Get information about a podcast subscription
+
+        info http://example.org/show.rss
+
+            List metadata and episodes for the given podcast
+        """
+        podcast = self._get_podcast(url)
 
         if podcast is not None:
             def feed_update_status_msg(podcast):
@@ -403,6 +455,16 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def episodes(self, url=None):
+        """List episodes (all or for a given subscription)
+
+        episodes
+
+            List episodes from all subscriptions
+
+        episodes http://example.net/podcast.xml
+
+            List episodes from the given subscription only
+        """
         output = []
         for podcast in self._get_podcasts(url):
             podcast_printed = False
@@ -417,6 +479,15 @@ class gPodderCli(object):
         return True
 
     def query(self, *args):
+        """Query all episodes using an EQL expression
+
+        query video and not downloaded and mb < 10 and since < 7
+
+            Find all episodes that are videos, not yet downloaded, smaller than
+            10 MB and released in the last 7 days.
+
+        Use {apply} after this command to apply an action to the query results.
+        """
         self._last_query_match = []
         if not args:
             self._error(_('Usage: query EQL'))
@@ -451,6 +522,12 @@ class gPodderCli(object):
         return ''.join(('#', inred(podcast.title), '-', _('Subscription suspended')))
 
     def list(self):
+        """List all podcast subscriptions
+
+        list
+
+            Lists all subscribed podcasts (title and URL)
+        """
         for podcast in self._model.get_podcasts():
             print(self._format_podcast(podcast))
             print(podcast.url)
@@ -470,13 +547,23 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def update(self, url=None):
+        """Check for new episodes
+
+        update
+
+            Check for new episodes for all subscriptions
+
+        update http://example.org/feed.atom
+
+            Check for new episodes in the given subscription only
+        """
         count = 0
         print(_('Checking for new episodes'))
         for podcast in self._get_podcasts(url):
 
             if not podcast.pause_subscription:
                 self._update_podcast(podcast)
-                count += sum(1 for e in podcast.episodes if self.is_episode_new(e))
+                count += sum(1 for e in podcast.episodes if self._is_episode_new(e))
             else:
                 self._start_action(_('Skipping %(podcast)s') % {
                     'podcast': podcast.title})
@@ -493,11 +580,23 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def pending(self, url=None):
+        """List new episodes
+
+        pending
+
+            List new episodes from all subscriptions
+
+        pending http://example.org/episodes.rss
+
+            List new episodes from the given subscription only
+
+        Use {download} to download all pending episodes.
+        """
         count = 0
         for podcast in self._get_podcasts(url):
             podcast_printed = False
             for episode in podcast.episodes:
-                if self.is_episode_new(episode):
+                if self._is_episode_new(episode):
                     if not podcast_printed:
                         print('#', ingreen(podcast.title))
                         podcast_printed = True
@@ -523,6 +622,19 @@ class gPodderCli(object):
         return None
 
     def mark(self, action, episode_id):
+        """Mark an episode as old or new
+
+        mark 00ab new
+
+            Mark episode with ID 00ab as new
+
+        mark af02 old
+
+            Mark episode with ID af02 as old
+
+        Use {episodes} or {query} to find episodes you can mark as new. Can be
+        used in combination with {apply} to mark multiple episodes as old/new.
+        """
         VALID_ACTIONS = ('new', 'old')
         if action not in VALID_ACTIONS:
             self._error(_('Invalid action: %(action)s. Valid actions: %(valid_actions)s') % {
@@ -546,6 +658,15 @@ class gPodderCli(object):
         return True
 
     def fetch(self, episode_id):
+        """Download an episode
+
+        fetch 0124
+
+            Download episode with ID 0124
+
+        Use {episodes} or {query} to find episode IDs required for this command.
+        Can be used in combination with {apply} to download multiple episodes.
+        """
         episode = self._lookup_episode(episode_id)
         if episode is None:
             return False
@@ -555,6 +676,15 @@ class gPodderCli(object):
         return True
 
     def rm(self, episode_id):
+        """Delete an episode
+
+        rm 0fa1
+
+            Delete episode with ID 0fa1
+
+        Use {episodes} or {query} to find episode IDs required for this command.
+        Can be used in combination with {apply} to delete multiple episodes.
+        """
         episode = self._lookup_episode(episode_id)
         if episode is None:
             return False
@@ -570,6 +700,15 @@ class gPodderCli(object):
             num /= 1024.0
 
     def details(self, episode_id):
+        """Show details about an episode
+
+        details 00f3
+
+            Show details for episode 00f3
+
+        Use {episodes} or {query} to find episode IDs required for this command.
+        Can be used in combination with {apply} to show multiple episodes's details.
+        """
         episode = self._lookup_episode(episode_id)
         if episode is None:
             return False
@@ -583,6 +722,25 @@ class gPodderCli(object):
         return True
 
     def apply(self, *args):
+        """Apply a command to the last query result list
+
+        Must be used after {query}.
+
+        apply mark old
+
+            Mark all episodes in the last query result as old
+
+        apply fetch
+
+            Download all episodes found in the last query
+
+        Commands that can be used with {apply} are:
+            - fetch
+            - mark new
+            - mark old
+            - rm
+            - details
+        """
         if is_single_command:
             self._error(_('Apply can only be used during an interactive session'))
             return False
@@ -609,11 +767,23 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def download(self, url=None):
+        """Download all pending episodes
+
+        download
+
+            Download all pending episodes for all subscriptions
+
+        download http://example.com/podcast/episodes.xml
+
+            Download all pending episodes for the given subscription
+
+        Use {pending} to see a list of episodes that would be downloaded.
+        """
         count = 0
         for podcast in self._get_podcasts(url):
             podcast_printed = False
             for episode in podcast.episodes:
-                if self.is_episode_new(episode):
+                if self._is_episode_new(episode):
                     if not podcast_printed:
                         print(inblue(podcast.title))
                         podcast_printed = True
@@ -625,7 +795,19 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def disable(self, url):
-        podcast = self.get_podcast(url)
+        """Pause subscription of a given feed
+
+        disable http://example.org/feed.rss
+
+            Disable feed updates for the given subscription.
+
+        Disabled subscriptions will not be included in checks for new episodes
+        with {update}. Use {enable} to re-enable subscriptions. Disabling of a
+        feed is useful if you want to keep downloaded episodes, but do not want
+        to check for new episodes. Use {unsubscribe} if you want to remove the
+        subscription and delete downloaded episodes.
+        """
+        podcast = self._get_podcast(url)
 
         if podcast is not None:
             if not podcast.pause_subscription:
@@ -637,7 +819,16 @@ class gPodderCli(object):
 
     @FirstArgumentIsPodcastURL
     def enable(self, url):
-        podcast = self.get_podcast(url)
+        """Resume subscription of a given feed
+
+        enable http://example.net/podcast/latest.atom
+
+            Enable feed updates for the given subscription.
+
+        Use {disable} to disable subscriptions. Use {unsubscribe} if you want
+        to remove the subscription and delete downloaded episodes.
+        """
+        podcast = self._get_podcast(url)
 
         if podcast is not None:
             if podcast.pause_subscription:
@@ -648,6 +839,12 @@ class gPodderCli(object):
         return True
 
     def versioncheck(self):
+        """Check if a new version of gPodder is available
+
+        versioncheck
+
+            Contact the gPodder server to check if there's a new version
+        """
         up_to_date, latest_version, releasedate, __ = util.get_update_info()
 
         info = {'latestversion': ingreen(latest_version),
@@ -664,17 +861,43 @@ class gPodderCli(object):
             self._info(_('Download the new version from %(url)s') % info)
 
     def registry(self):
+        """Print all registered providers
+
+        registry
+
+            Print a list of provider types and providers
+
+        This is mostly useful for debugging and during development. Providers are
+        installed into the registry by plugins to support parsing, displaying
+        and handling of special content feeds that are not purely podcasts.
+        """
         registry.dump()
         return True
 
     def shortcuts(self):
+        """List all URL shortcuts that can be used for feed URLs
+
+        shortcuts
+
+            Print a list of shortcuts and their expansions
+
+        Shortcuts displayed here can be used instead of the full URL to save typing
+        and ease adding commonly-used feed URL patterns without having to remember
+        or type the full URL each time. Plugins can add new shortcuts.
+        """
         placeholder = ingreen('<name>')
         for key, value in sorted(self.core.model.get_prefixes().items()):
             print(':'.join((key, placeholder)), '->', value.replace('%s', placeholder))
 
     @FirstArgumentIsPodcastURL
     def rewrite(self, old_url, new_url):
-        podcast = self.get_podcast(old_url)
+        """Change the feed URL of an existing subscription
+
+        rewrite http://example.org/feed.xml http://example.net/podcast.rss
+
+            Change the feed URL of the existing subscription to a new URL
+        """
+        podcast = self._get_podcast(old_url)
         if podcast is not None:
             result = podcast.rewrite_url(new_url)
             if result is None:
@@ -684,11 +907,42 @@ class gPodderCli(object):
                 self._error(old_url, '=>', new_url)
         return True
 
-    def help(self):
-        print(stylize(__doc__), file=sys.stderr, end='')
-        return True
+    def help(self, command=None):
+        """Show help about existing commands
+
+        help
+
+            Show summary of available commands
+
+        help subscribe
+
+            Show help about the subscribe command
+        """
+        if command is None:
+            print(stylize(__doc__), file=sys.stderr, end='')
+            fmt = {'command': inblue(_('<command>'))}
+            print(_('Use "help %(command)s" to get detailed help for a command') % fmt)
+            return True
+
+        if command in self._commands:
+            doc = inspect.getdoc(self._commands[command])
+            if doc is None:
+                self._error(_('No documentation available (command exists)'))
+                return False
+            else:
+                print('', docize(doc, command), '', sep='\n')
+                return True
+
+        self._error(_('No such command'))
+        return False
 
     def license(self):
+        """Show software license and copyright information
+
+        license
+
+            Show the license and copyright messages
+        """
         self._pager(gpodder.__doc__)
 
     # -------------------------------------------------------------------
@@ -840,6 +1094,10 @@ class gPodderCli(object):
 def stylize(s):
     s = re.sub(r'    .{27}', lambda m: inblue(m.group(0)), s)
     s = re.sub(r'  - .*', lambda m: ingreen(m.group(0)), s)
+    return s
+
+def docize(s, cmd):
+    s = re.sub(r'\n%s.*' % re.escape(cmd), lambda m: inyellow(m.group(0)), s)
     return s
 
 if __name__ == '__main__':
