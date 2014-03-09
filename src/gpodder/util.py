@@ -683,7 +683,10 @@ def urlopen(url, headers=None, data=None, timeout=None):
     else:
         headers = dict(headers)
 
-    headers.update({'User-agent': gpodder.user_agent})
+    # Allow the calling code to supply a custom user-agent
+    if 'User-agent' not in headers:
+        headers['User-agent'] = gpodder.user_agent
+
     request = urllib.request.Request(url, data=data, headers=headers)
     if timeout is None:
         return opener.open(request)

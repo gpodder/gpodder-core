@@ -131,6 +131,6 @@ class PodcastParserFeed(object):
         return new_episodes, seen_guids
 
 
-@model.register_custom_handler
+@model.register_fallback_handler
 def podcast_parser_handler(channel, max_episodes):
     return PodcastParserFeed(channel, max_episodes)

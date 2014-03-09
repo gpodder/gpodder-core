@@ -93,8 +93,12 @@ class Core(object):
     def _load_plugins(self):
         # Plugins to load by default
         DEFAULT_PLUGINS = [
+            # Custom handlers (tried in order, put most specific first)
             'gpodder.plugins.soundcloud',
             'gpodder.plugins.xspf',
+            'gpodder.plugins.itunes',
+
+            # Fallback handlers (catch-all)
             'gpodder.plugins.podcast',
         ]
 

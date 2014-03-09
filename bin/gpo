@@ -296,6 +296,10 @@ class gPodderCli(object):
                 podcast.rename(title)
             podcast.save()
             self._finish_action()
+
+            if podcast.url != url:
+                self._info(_('Resolved feed URL: %(url)s') % {'url': ingreen(podcast.url)})
+
             return True
         except Exception as e:
             self._finish_action(success=False)

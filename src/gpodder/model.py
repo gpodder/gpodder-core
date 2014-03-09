@@ -39,6 +39,7 @@ import glob
 import shutil
 import time
 import datetime
+import itertools
 
 import hashlib
 import string
@@ -51,9 +52,14 @@ class NoHandlerForURL(Exception):
 class gPodderFetcher:
     def __init__(self):
         self.custom_handlers = []
+        self.fallback_handlers = []
+
+    def handlers(self):
+        # First, try all custom handlers in order, only then fallback handlers
+        return itertools.chain(self.custom_handlers, self.fallback_handlers)
 
     def fetch_channel(self, channel, max_episodes):
-        for handler in self.custom_handlers:
+        for handler in self.handlers():
             feed = handler(channel, max_episodes)
             if feed is not None:
                 return feed
@@ -67,10 +73,16 @@ class gPodderFetcher:
 
     def register(self, handler):
         self.custom_handlers.append(handler)
+        return handler
+
+    def register_fallback(self, handler):
+        self.fallback_handlers.append(handler)
+        return handler
 
 # The "register" method is exposed here for external usage
 fetcher = gPodderFetcher()
 register_custom_handler = fetcher.register
+register_fallback_handler = fetcher.register_fallback
 
 # Our podcast model:
 #
@@ -785,7 +797,10 @@ class PodcastChannel(PodcastModelObject):
         try:
             max_episodes = self.model.core.config.limit.episodes
             try:
+                old_url = self.url
                 result = fetcher.fetch_channel(self, max_episodes)
+                if self.url != old_url:
+                    logger.info('URL updated: {} -> {}'.format(old_url, self.url))
                 self._consume_custom_feed(result)
 
                 # Download the cover art if it's not yet available
