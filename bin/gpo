@@ -648,13 +648,20 @@ class gPodderCli(object):
         return True
 
     def versioncheck(self):
-        up_to_date, latest_version, __, __ = util.get_update_info()
+        up_to_date, latest_version, releasedate, __ = util.get_update_info()
+
+        info = {'latestversion': ingreen(latest_version),
+                'latestdate': ingreen(releasedate),
+                'url': inblue(gpodder.__url__),
+                'thisversion': inred(gpodder.__version__),
+                'thisdate': inred(gpodder.__date__)}
 
         if up_to_date:
             self._info(_('No software updates available'))
         else:
-            self._info(_('New version %(version)s available: %(url)s') %
-                       {'version': latest_version, 'url': gpodder.__url__})
+            self._info(_('New version %(latestversion)s available (released: %(latestdate)s)') % info)
+            self._info(_('You have version %(thisversion)s (released: %(thisdate)s)') % info)
+            self._info(_('Download the new version from %(url)s') % info)
 
     def registry(self):
         registry.dump()
