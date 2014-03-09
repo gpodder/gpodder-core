@@ -963,9 +963,11 @@ class Model(object):
         assert all(url != podcast.url for podcast in self.get_podcasts())
         return self.PodcastClass.load(self, url, create, authentication_tokens)
 
+    def get_prefixes(self):
+        return {k: v for s in registry.url_shortcut.each() for k, v in s.items()}
+
     def normalize_feed_url(self, url):
-        prefixes = {k: v for s in registry.url_shortcut.each() for k, v in s.items()}
-        for prefix, expansion in prefixes.items():
+        for prefix, expansion in self.get_prefixes().items():
             if url.startswith(prefix + ':'):
                 old_url = url
                 url = expansion % (url[len(prefix) + 1:],)

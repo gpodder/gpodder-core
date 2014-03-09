@@ -72,6 +72,7 @@
     license                    Show the software license information
     rewrite OLDURL NEWURL      Change the feed URL of [OLDURL] to [NEWURL]
     registry                   Print registered resolvers
+    shortcuts                  List available URL shortcuts
 
 """
 
@@ -658,6 +659,11 @@ class gPodderCli(object):
     def registry(self):
         registry.dump()
         return True
+
+    def shortcuts(self):
+        placeholder = ingreen('<name>')
+        for key, value in sorted(self.core.model.get_prefixes().items()):
+            print(':'.join((key, placeholder)), '->', value.replace('%s', placeholder))
 
     @FirstArgumentIsPodcastURL
     def rewrite(self, old_url, new_url):
