@@ -723,7 +723,7 @@ class DownloadTask(object):
 
         try:
             # Resolve URL and start downloading the episode
-            fmt_ids = youtube.get_fmt_ids(self._config.youtube)
+            fmt_ids = youtube.get_fmt_ids(self._config.plugins.youtube)
             url = youtube.get_real_download_url(self.__episode.url, fmt_ids)
             url = vimeo.get_real_download_url(url)
 
