@@ -37,15 +37,9 @@ class Core(object):
                  config_class=config.Config,
                  database_class=storage.Database,
                  model_class=model.Model,
-                 prefix=None,
                  verbose=True,
                  progname='gpodder'):
         self._set_socket_timeout()
-
-        self.prefix = prefix
-        if not self.prefix:
-            # XXX
-            self.prefix = os.path.abspath('.')
 
         home = os.path.expanduser('~')
 
