@@ -48,19 +48,14 @@ class NoHandlerForURL(Exception):
     pass
 
 
-class gPodderFetcher:
-    def fetch_channel(self, channel, max_episodes):
-        for resolver in (registry.feed_handler, registry.fallback_feed_handler):
-            feed = resolver.resolve(channel, None, max_episodes)
-            if feed is not None:
-                return feed
+def fetch_channel(channel, max_episodes):
+    for resolver in (registry.feed_handler, registry.fallback_feed_handler):
+        feed = resolver.resolve(channel, None, max_episodes)
+        if feed is not None:
+            return feed
 
-        raise NoHandlerForURL(channel.url)
+    raise NoHandlerForURL(channel.url)
 
-# The "register" method is exposed here for external usage
-fetcher = gPodderFetcher()
-register_custom_handler = registry.feed_handler.register
-register_fallback_handler = registry.fallback_feed_handler.register
 
 # Our podcast model:
 #
@@ -763,7 +758,7 @@ class PodcastChannel(PodcastModelObject):
         try:
             max_episodes = self.model.core.config.limit.episodes
             old_url = self.url
-            result = fetcher.fetch_channel(self, max_episodes)
+            result = fetch_channel(self, max_episodes)
             if self.url != old_url:
                 logger.info('URL updated: {} -> {}'.format(old_url, self.url))
             self._consume_custom_feed(result)
