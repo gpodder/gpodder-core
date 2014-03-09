@@ -18,6 +18,7 @@
 ##########################################################################
 
 PYTHON ?= python3
+PEP8 ?= pep8
 
 ##########################################################################
 
@@ -27,6 +28,7 @@ help:
 	@echo "  make headlink       Print commit URL for the current Git head"
 	@echo ""
 	@echo "  make test           Run automated tests"
+	@echo "  make pep8           Run pep8 utility to check code style"
 	@echo "  make clean          Remove generated and compiled files"
 	@echo "  make distclean      'make clean' + remove dist/"
 	@echo ""
@@ -49,6 +51,9 @@ test:
 
 releasetest: test $(POFILES)
 	for lang in $(POFILES); do $(MSGFMT) --check $$lang; done
+
+pep8:
+	$(PEP8) --max-line-length=100 src
 
 ##########################################################################
 
