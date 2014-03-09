@@ -97,6 +97,8 @@ class Core(object):
             'gpodder.plugins.soundcloud',
             'gpodder.plugins.xspf',
             'gpodder.plugins.itunes',
+            'gpodder.plugins.youtube',
+            'gpodder.plugins.vimeo',
 
             # Fallback handlers (catch-all)
             'gpodder.plugins.podcast',

@@ -26,7 +26,7 @@
 
 import gpodder
 
-from gpodder import model
+from gpodder import registry
 from gpodder import util
 
 import podcastparser
@@ -151,10 +151,15 @@ class FM4OnDemandPlaylist(object):
         return tracks, seen_guids
 
 
-@model.register_custom_handler
+@registry.feed_handler.register
 def fm4_on_demand_playlist_handler(channel, max_episodes):
     m = re.match(r'http://onapp1\.orf\.at/webcam/fm4/fod/([^/]+)\.xspf$', channel.url)
 
     if m is not None:
         category = m.group(1)
         return FM4OnDemandPlaylist(channel.url, category)
+
+
+@registry.url_shortcut.register
+def fm4_on_demand_resolve_url_shortcut():
+    return {'fm4od': 'http://onapp1.orf.at/webcam/fm4/fod/%s.xspf'}

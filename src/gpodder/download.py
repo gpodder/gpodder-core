@@ -28,9 +28,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from gpodder import util
-import gpodder
+from gpodder import registry
 
-from gpodder.plugins import youtube, vimeo
+import gpodder
 
 import socket
 import threading
@@ -723,9 +723,7 @@ class DownloadTask(object):
 
         try:
             # Resolve URL and start downloading the episode
-            fmt_ids = youtube.get_fmt_ids(self._config.plugins.youtube)
-            url = youtube.get_real_download_url(self.__episode.url, fmt_ids)
-            url = vimeo.get_real_download_url(url)
+            url = registry.download_url.resolve(self.__episode, self.url, self._config)
 
             downloader = DownloadURLOpener(self.__episode.channel)
 

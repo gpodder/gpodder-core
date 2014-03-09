@@ -20,9 +20,7 @@
 import gpodder
 
 from gpodder import util
-from gpodder import model
-
-from gpodder.plugins import podcast
+from gpodder import registry
 
 import re
 import logging
@@ -39,7 +37,7 @@ class ITunesFeedException(BaseException):
     pass
 
 
-@model.register_custom_handler
+@registry.feed_handler.register
 def itunes_feed_handler(channel, max_episodes):
     m = re.match(r'https?://itunes.apple.com/(?:[^/]*/)?podcast/.+$', channel.url, re.I)
     if m is None:
@@ -59,7 +57,8 @@ def itunes_feed_handler(channel, max_episodes):
         channel.url = url
 
         # Delegate further processing of the feed to the normal podcast parser
-        return podcast.PodcastParserFeed(channel, max_episodes)
+        # by returning None (will try the next handler in the resolver chain)
+        return None
     except Exception as ex:
         logger.warn('Cannot resolve iTunes feed: {}'.format(str(ex)))
         raise

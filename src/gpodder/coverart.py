@@ -22,8 +22,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from gpodder import util
-
-from gpodder.plugins import youtube
+from gpodder import registry
 
 import os
 
@@ -56,10 +55,7 @@ class CoverDownloader(object):
 
         # If allowed to download files, do so here
         if download:
-            # YouTube-specific cover art image resolver
-            youtube_cover_url = youtube.get_real_cover(podcast.url)
-            if youtube_cover_url is not None:
-                cover_url = youtube_cover_url
+            cover_url = registry.cover_art.resolve(podcast, cover_url)
 
             if not cover_url:
                 return None

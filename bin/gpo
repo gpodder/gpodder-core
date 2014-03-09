@@ -71,6 +71,7 @@
     versioncheck               Check if a new gPodder version is available
     license                    Show the software license information
     rewrite OLDURL NEWURL      Change the feed URL of [OLDURL] to [NEWURL]
+    registry                   Print registered resolvers
 
 """
 
@@ -132,6 +133,7 @@ from gpodder import core
 from gpodder import opml
 from gpodder import util
 from gpodder import query
+from gpodder import registry
 from gpodder.config import config_value_to_string
 
 
@@ -259,7 +261,8 @@ class gPodderCli(object):
         Returns a podcast object for the URL or None if
         the podcast has not been subscribed to.
         """
-        url = util.normalize_feed_url(url)
+        url = self.core.model.normalize_feed_url(url)
+
         if url is None:
             self._error(_('Invalid URL: %(url)s') % {'url': url})
             return None
@@ -652,6 +655,10 @@ class gPodderCli(object):
             self._info(_('New version %(version)s available: %(url)s') %
                        {'version': latest_version, 'url': gpodder.__url__})
 
+    def registry(self):
+        registry.dump()
+        return True
+
     @FirstArgumentIsPodcastURL
     def rewrite(self, old_url, new_url):
         podcast = self.get_podcast(old_url)
@@ -723,6 +730,8 @@ class gPodderCli(object):
                 self._parse(args)
             except KeyboardInterrupt:
                 self._error('Keyboard interrupt.')
+                if verbose:
+                    raise
             except EOFError:
                 self._error('EOF.')
 

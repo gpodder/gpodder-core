@@ -18,18 +18,15 @@
 
 import gpodder
 
-from gpodder import model
+from gpodder import registry
 from gpodder import util
-
-# XXX: Avoid "cross-importing" of plugins
-from gpodder.plugins import youtube
-from gpodder.plugins import vimeo
 
 import podcastparser
 
 import urllib.request
 import urllib.error
 import urllib.parse
+import re
 
 import logging
 
@@ -94,13 +91,6 @@ class PodcastParserFeed(object):
     def _pick_enclosure(self, episode_dict):
         if not episode_dict['enclosures']:
             del episode_dict['enclosures']
-
-            # XXX: Move special cases to {youtube,vimeo}.py as subclass
-            if (youtube.is_video_link(episode_dict['link']) or
-                    vimeo.is_video_link(episode_dict['link'])):
-                episode_dict['url'] = episode_dict['link']
-                return True
-
             return False
 
         # FIXME: Pick the right enclosure from multiple ones
@@ -131,6 +121,28 @@ class PodcastParserFeed(object):
         return new_episodes, seen_guids
 
 
-@model.register_fallback_handler
+class PodcastParserEnclosureFallbackFeed(PodcastParserFeed):
+    # Implement this in a subclass to determine a fallback enclosure
+    # for feeds that don't list their media files as enclosures
+    def _get_enclosure_url(self, episode_dict):
+        return None
+
+    def _pick_enclosure(self, episode_dict):
+        if not episode_dict['enclosures']:
+            url = self._get_enclosure_url(episode_dict)
+            if url is not None:
+                del episode_dict['enclosures']
+                episode_dict['url'] = url
+                return True
+
+        return super(PodcastParserEnclosureFallbackFeed, self)._pick_enclosure(episode_dict)
+
+
+@registry.fallback_feed_handler.register
 def podcast_parser_handler(channel, max_episodes):
     return PodcastParserFeed(channel, max_episodes)
+
+
+@registry.url_shortcut.register
+def podcast_resolve_url_shortcut():
+    return {'fb': 'http://feeds.feedburner.com/%s'}

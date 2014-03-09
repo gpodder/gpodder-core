@@ -19,49 +19,60 @@
 import gpodder
 
 from gpodder import util
+from gpodder import registry
+
+from gpodder.plugins import podcast
 
 import logging
 logger = logging.getLogger(__name__)
 
 import re
+import json
 
 VIMEOCOM_RE = re.compile(r'http://vimeo\.com/(\d+)$', re.IGNORECASE)
+VIMEOCHANNEL_RE = re.compile(r'http://vimeo\.com/([a-z0-9]+)[/]?$', re.IGNORECASE)
 MOOGALOOP_RE = re.compile(r'http://vimeo\.com/moogaloop\.swf\?clip_id=(\d+)$', re.IGNORECASE)
 SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
+DATA_CONFIG_RE = re.compile(r'data-config-url="([^"]+)"')
 
 
 class VimeoError(BaseException):
     pass
 
 
-def get_real_download_url(url):
-    quality = 'sd'
-    codecs = 'H264,VP8,VP6'
+@registry.download_url.register
+def vimeo_resolve_download_url(episode, config):
+    url = episode.url
 
     video_id = get_vimeo_id(url)
 
     if video_id is None:
-        return url
+        return None
 
     web_url = 'http://vimeo.com/%s' % video_id
     web_data = util.urlopen(web_url).read().decode('utf-8')
-    sig_pair = SIGNATURE_RE.search(web_data)
+    data_config_frag = DATA_CONFIG_RE.search(web_data)
 
-    if sig_pair is None:
-        raise VimeoError('Cannot get signature pair from Vimeo')
+    if data_config_frag is None:
+        raise VimeoError('Cannot get data config from Vimeo')
 
-    timestamp, signature = sig_pair.groups()
-    params = '&'.join('%s=%s' % i for i in [
-        ('clip_id', video_id),
-        ('sig', signature),
-        ('time', timestamp),
-        ('quality', quality),
-        ('codecs', codecs),
-        ('type', 'moogaloop_local'),
-        ('embed_location', ''),
-    ])
-    player_url = 'http://player.vimeo.com/play_redirect?%s' % params
-    return player_url
+    data_config_url = data_config_frag.group(1).replace('&amp;', '&')
+
+    def get_urls(data_config_url):
+        data_config_data = util.urlopen(data_config_url).read().decode('utf-8')
+        data_config = json.loads(data_config_data)
+        for fileinfo in data_config['request']['files'].values():
+            if not isinstance(fileinfo, dict):
+                continue
+
+            for fileformat, keys in fileinfo.items():
+                if not isinstance(keys, dict):
+                    continue
+
+                yield (fileformat, keys['url'])
+
+    for quality, url in get_urls(data_config_url):
+        return url
 
 
 def get_vimeo_id(url):
@@ -81,12 +92,51 @@ def is_video_link(url):
 
 
 def get_real_channel_url(url):
-    result = VIMEOCOM_RE.match(url)
+    result = VIMEOCHANNEL_RE.match(url)
     if result is not None:
         return 'http://vimeo.com/%s/videos/rss' % result.group(1)
 
-    return url
+    return None
 
 
 def get_real_cover(url):
     return None
+
+
+class PodcastParserVimeoFeed(podcast.PodcastParserEnclosureFallbackFeed):
+    def _get_enclosure_url(self, episode_dict):
+        if is_video_link(episode_dict['link']):
+            return episode_dict['link']
+
+        return None
+
+
+@registry.feed_handler.register
+def vimeo_feed_handler(channel, max_episodes):
+    url = get_real_channel_url(channel.url)
+    if url is None:
+        return None
+
+    logger.info('Vimeo feed resolved: {} -> {}'.format(channel.url, url))
+    channel.url = url
+
+    return PodcastParserVimeoFeed(channel, max_episodes)
+
+
+@registry.episode_basename.register
+def vimeo_resolve_episode_basename(episode, sanitized):
+    if sanitized and is_video_link(episode.url):
+        return sanitized
+
+
+@registry.podcast_title.register
+def vimeo_resolve_podcast_title(podcast, new_title):
+    VIMEO_PREFIX = 'Vimeo / '
+    if new_title.startswith(VIMEO_PREFIX):
+        return new_title[len(VIMEO_PREFIX):] + ' on Vimeo'
+
+
+@registry.content_type.register
+def vimeo_resolve_content_type(episode):
+    if is_video_link(episode.url):
+        return 'video'

@@ -27,8 +27,7 @@ import gpodder
 from gpodder import util
 from gpodder import coverart
 from gpodder import download
-
-from gpodder.plugins import youtube, vimeo
+from gpodder import registry
 
 import logging
 logger = logging.getLogger(__name__)
@@ -50,39 +49,18 @@ class NoHandlerForURL(Exception):
 
 
 class gPodderFetcher:
-    def __init__(self):
-        self.custom_handlers = []
-        self.fallback_handlers = []
-
-    def handlers(self):
-        # First, try all custom handlers in order, only then fallback handlers
-        return itertools.chain(self.custom_handlers, self.fallback_handlers)
-
     def fetch_channel(self, channel, max_episodes):
-        for handler in self.handlers():
-            feed = handler(channel, max_episodes)
+        for resolver in (registry.feed_handler, registry.fallback_feed_handler):
+            feed = resolver.resolve(channel, None, max_episodes)
             if feed is not None:
                 return feed
 
         raise NoHandlerForURL(channel.url)
 
-    def _resolve_url(self, url):
-        url = youtube.get_real_channel_url(url)
-        url = vimeo.get_real_channel_url(url)
-        return url
-
-    def register(self, handler):
-        self.custom_handlers.append(handler)
-        return handler
-
-    def register_fallback(self, handler):
-        self.fallback_handlers.append(handler)
-        return handler
-
 # The "register" method is exposed here for external usage
 fetcher = gPodderFetcher()
-register_custom_handler = fetcher.register
-register_fallback_handler = fetcher.register_fallback
+register_custom_handler = registry.feed_handler.register
+register_fallback_handler = registry.fallback_feed_handler.register
 
 # Our podcast model:
 #
@@ -261,7 +239,9 @@ class PodcastEpisode(PodcastModelObject):
         task = download.DownloadTask(self)
         task.add_progress_callback(progress_callback)
         task.status = download.DownloadTask.QUEUED
-        return task.run()
+        result = task.run()
+        task.recycle()
+        return result
 
     def download_progress(self):
         task = self.download_task
@@ -319,7 +299,7 @@ class PodcastEpisode(PodcastModelObject):
         self.is_new = False
         self.save()
 
-    def get_playback_url(self, fmt_ids=None, allow_partial=False):
+    def get_playback_url(self, allow_partial=False):
         """Local (or remote) playback/streaming filename/URL
 
         Returns either the local filename or a streaming URL that
@@ -335,9 +315,7 @@ class PodcastEpisode(PodcastModelObject):
             return url + '.partial'
 
         if url is None or not os.path.exists(url):
-            url = self.url
-            url = youtube.get_real_download_url(url, fmt_ids)
-            url = vimeo.get_real_download_url(url)
+            url = registry.download_url.resolve(self, self.url, self.parent.model.core.config)
 
         return url
 
@@ -419,13 +397,10 @@ class PodcastEpisode(PodcastModelObject):
                 except Exception as e:
                     logger.warn('Cannot resolve redirection for %s', self.url, exc_info=True)
 
-            # Use title for YouTube, Vimeo and Soundcloud downloads
-            if (youtube.is_video_link(self.url) or
-                    vimeo.is_video_link(self.url) or
-                    fn_template == 'stream'):
-                sanitized = util.sanitize_filename(self.title, self.MAX_FILENAME_LENGTH)
-                if sanitized:
-                    fn_template = sanitized
+            sanitized_title = util.sanitize_filename(self.title, self.MAX_FILENAME_LENGTH)
+            if fn_template == 'stream' and sanitized_title:
+                fn_template = sanitized_title
+            fn_template = registry.episode_basename.resolve(self, fn_template, sanitized_title)
 
             # If the basename is empty, use the md5 hexdigest of the URL
             if not fn_template or fn_template.startswith('redirect.'):
@@ -473,9 +448,9 @@ class PodcastEpisode(PodcastModelObject):
         return ext
 
     def file_type(self):
-        # Assume all YouTube/Vimeo links are video files
-        if youtube.is_video_link(self.url) or vimeo.is_video_link(self.url):
-            return 'video'
+        resolved_type = registry.content_type.resolve(self, None)
+        if resolved_type is not None:
+            return resolved_type
 
         return util.file_type_by_extension(self.extension())
 
@@ -708,16 +683,7 @@ class PodcastChannel(PodcastModelObject):
         # don't yet have a title, or if the title is the
         # feed URL (e.g. we didn't find a title before).
         if not self.title or self.title == self.url:
-            self.title = new_title
-
-            # Start YouTube- and Vimeo-specific title FIX
-            YOUTUBE_PREFIX = 'Uploads by '
-            VIMEO_PREFIX = 'Vimeo / '
-            if self.title.startswith(YOUTUBE_PREFIX):
-                self.title = self.title[len(YOUTUBE_PREFIX):] + ' on YouTube'
-            elif self.title.startswith(VIMEO_PREFIX):
-                self.title = self.title[len(VIMEO_PREFIX):] + ' on Vimeo'
-            # End YouTube- and Vimeo-specific title FIX
+            self.title = registry.podcast_title.resolve(self, new_title, new_title)
 
     def _consume_metadata(self, title, link, description, cover_url, payment_url):
         self._consume_updated_title(title)
@@ -796,19 +762,16 @@ class PodcastChannel(PodcastModelObject):
         self._updating = True
         try:
             max_episodes = self.model.core.config.limit.episodes
-            try:
-                old_url = self.url
-                result = fetcher.fetch_channel(self, max_episodes)
-                if self.url != old_url:
-                    logger.info('URL updated: {} -> {}'.format(old_url, self.url))
-                self._consume_custom_feed(result)
+            old_url = self.url
+            result = fetcher.fetch_channel(self, max_episodes)
+            if self.url != old_url:
+                logger.info('URL updated: {} -> {}'.format(old_url, self.url))
+            self._consume_custom_feed(result)
 
-                # Download the cover art if it's not yet available
-                self.model.core.cover_downloader.get_cover(self, download=True)
+            # Download the cover art if it's not yet available
+            self.model.core.cover_downloader.get_cover(self, download=True)
 
-                self.save()
-            except Exception as e:
-                raise
+            self.save()
 
             # Re-determine the common prefix for all episodes
             self._determine_common_prefix()
@@ -855,15 +818,12 @@ class PodcastChannel(PodcastModelObject):
         return self.section
 
     def _get_content_type(self):
-        if 'youtube.com' in self.url or 'vimeo.com' in self.url:
-            return 'video'
-
         audio, video, other = 0, 0, 0
         for episode in self.episodes:
-            content_type = episode.mime_type.lower()
-            if content_type.startswith('audio'):
+            content_type = episode.file_type()
+            if content_type == 'audio':
                 audio += 1
-            elif content_type.startswith('video'):
+            elif content_type == 'video':
                 video += 1
             else:
                 other += 1
@@ -1007,6 +967,17 @@ class Model(object):
     def load_podcast(self, url, create=True, authentication_tokens=None):
         assert all(url != podcast.url for podcast in self.get_podcasts())
         return self.PodcastClass.load(self, url, create, authentication_tokens)
+
+    def normalize_feed_url(self, url):
+        prefixes = {k: v for s in registry.url_shortcut.each() for k, v in s.items()}
+        for prefix, expansion in prefixes.items():
+            if url.startswith(prefix + ':'):
+                old_url = url
+                url = expansion % (url[len(prefix) + 1:],)
+                logger.info('Expanding prefix {} -> {}'.format(old_url, url))
+                break
+
+        return util.normalize_feed_url(url)
 
     @classmethod
     def podcast_sort_key(cls, podcast):

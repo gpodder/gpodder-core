@@ -21,7 +21,7 @@
 
 import gpodder
 
-from gpodder import model
+from gpodder import registry
 from gpodder import util
 
 import json
@@ -199,7 +199,7 @@ class SoundcloudFavFeed(SoundcloudFeed):
         return self._get_new_episodes(channel, 'favorites')
 
 
-@model.register_custom_handler
+@registry.feed_handler.register
 def soundcloud_feed_handler(channel, max_episodes):
     m = re.match(r'http://([a-z]+\.)?soundcloud\.com/([^/]+)$', channel.url, re.I)
 
@@ -208,10 +208,16 @@ def soundcloud_feed_handler(channel, max_episodes):
         return SoundcloudFeed(username)
 
 
-@model.register_custom_handler
+@registry.feed_handler.register
 def soundcloud_fav_feed_handler(channel, max_episodes):
     m = re.match(r'http://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
 
     if m is not None:
         subdomain, username = m.groups()
         return SoundcloudFavFeed(username)
+
+
+@registry.url_shortcut.register
+def soundcloud_resolve_url_shortcut():
+    return {'sc': 'http://soundcloud.com/%s',
+            'scfav': 'http://soundcloud.com/%s/favorites'}
