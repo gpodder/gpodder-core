@@ -179,8 +179,8 @@ def normalize_feed_url(url):
     if path == '':
         path = '/'
 
-    # feed://, itpc:// and itms:// are really http://
-    if scheme in ('feed', 'itpc', 'itms'):
+    # feed://, itpc://, itms:// and itmss:// are really http://
+    if scheme in ('feed', 'itpc', 'itms', 'itmss'):
         scheme = 'http'
 
     if scheme not in ('http', 'https', 'ftp', 'file'):
