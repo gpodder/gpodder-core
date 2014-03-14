@@ -133,7 +133,7 @@ except MissingFile as mf:
 
 
 setup(
-    name='gpodder',
+    name='gpodder-core',
     version=metadata['version'],
     description=metadata['tagline'],
     license=metadata['license'],
