@@ -89,7 +89,6 @@ class Core(object):
         DEFAULT_PLUGINS = [
             # Custom handlers (tried in order, put most specific first)
             'gpodder.plugins.soundcloud',
-            'gpodder.plugins.xspf',
             'gpodder.plugins.itunes',
             'gpodder.plugins.youtube',
             'gpodder.plugins.vimeo',
