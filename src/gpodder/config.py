@@ -26,7 +26,7 @@
 import gpodder
 from gpodder import util
 
-import jsonconfig
+from gpodder import jsonconfig
 
 import os
 import shutil
