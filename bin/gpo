@@ -63,6 +63,10 @@
                                details) to episodes matched in the last
                                query command
 
+  - gpodder.net -
+
+    search QUERY               Search for podcasts on gpodder.net
+
   - Configuration -
 
     set [key] [value]          List one (all) keys or set to a new value
@@ -82,6 +86,7 @@ import os
 import re
 import inspect
 import functools
+import itertools
 try:
     import readline
 except ImportError:
@@ -99,6 +104,12 @@ except ImportError:
     termios = None
     fcntl = None
     struct = None
+
+try:
+    import mygpoclient.public
+except:
+    mygpoclient = None
+
 
 # A poor man's argparse/getopt - but it works for our use case :)
 verbose = False
@@ -152,6 +163,18 @@ def FirstArgumentIsPodcastURL(function):
     setattr(function, '_first_arg_is_podcast', True)
     return function
 
+def needs_mygpoclient(function):
+    """ Wrap methods that require mygpoclient """
+    @functools.wraps(function)
+    def _wrapper(self, *args, **kwargs):
+
+        if mygpoclient is None:
+            self._error(_('Install mygpoclient for gpodder.net features'))
+            return False
+
+        return function(self, *args, **kwargs)
+
+    return _wrapper
 
 def get_terminal_size():
     if None in (termios, fcntl, struct):
@@ -756,6 +779,25 @@ class gPodderCli(object):
         for episode_id in self._last_query_match:
             cmd = list(args) + ['%x' % episode_id]
             self._parse(cmd)
+
+    @needs_mygpoclient
+    def search(self, *queries):
+        """ search for podcasts on gpodder.net """
+        if not queries:
+            self._error(_('Please provide a search query'))
+            return
+
+        client = mygpoclient.public.PublicClient()
+        results = client.search_podcasts(' '.join(queries))
+        results = sorted(results, key=lambda p: p.subscribers, reverse=True)
+
+        def _format_result(podcast, n):
+            """ formats a single search result """
+            title = '{n}. {title}'.format(n=n, title=podcast.title)
+            return '\n'.join([title, podcast.url, podcast.mygpo_link, ''])
+
+        result = '\n'.join(map(_format_result, results, itertools.count(1)))
+        self._pager(result)
 
     def _download_summary(self, count):
         self._info(N_('%(count)d episode downloaded', '%(count)d episodes downloaded', count) % {'count': count})
