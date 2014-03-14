@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gpodder 4.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-09-29 23:10+0200\n"
+"POT-Creation-Date: 2014-03-14 23:28+0100\n"
 "PO-Revision-Date: 2013-09-29 23:10+0200\n"
 "Last-Translator: Thomas Perl <thp@gpodder.org>\n"
 "Language-Team: German <de@li.org>\n"
@@ -17,106 +17,203 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n == 1 ? 0 : 1;\n"
 
-#: bin/gpo:249 bin/gpo:519
+#: bin/gpo:172
+msgid "Install mygpoclient for gpodder.net features"
+msgstr "Für gpodder.net-Funktionen muss mygpoclient installiert sein"
+
+#: bin/gpo:307 bin/gpo:946
 #, python-format
 msgid "Invalid URL: %(url)s"
 msgstr "Ungültige URL: %(url)s"
 
-#: bin/gpo:262
+#: bin/gpo:320
 #, python-format
 msgid "Not subscribed to %(url)s"
 msgstr "Kein Abonnement für %(url)s"
 
-#: bin/gpo:266
+#: bin/gpo:332
 #, python-format
 msgid "Subscribing to %(url)s"
 msgstr "Abonniere %(url)s"
 
-#: bin/gpo:271
+#: bin/gpo:337
 #, python-format
 msgid "Already subscribed to %(url)s"
 msgstr "Abonement existiert bereits: %(url)s"
 
-#: bin/gpo:277
+#: bin/gpo:343
 #, python-format
 msgid "Subscription to %(url)s failed"
 msgstr "Abonnieren von %(url)s fehlgeschlagen"
 
-#: bin/gpo:306
+#: bin/gpo:352
+#, python-format
+msgid "Resolved feed URL: %(url)s"
+msgstr "Aufgelöste Feed-URL: %(url)s"
+
+#: bin/gpo:386
 #, python-format
 msgid "Configuration option %(key)s not found"
 msgstr "Konfigurations-Option %(key)s nicht gefunden"
 
-#: bin/gpo:310
+#: bin/gpo:390
 #, python-format
 msgid "Invalid configuration option: %(key)s"
 msgstr "Ungültige Konfigurations-Option: %(key)s"
 
-#: bin/gpo:333
+#: bin/gpo:425
 #, python-format
 msgid "Removed %(url)s"
 msgstr "%(url)s entfernt"
 
-#: bin/gpo:402
+#: bin/gpo:516
+msgid "Usage: query EQL"
+msgstr "Aufruf: query SQL"
+
+#: bin/gpo:535
+#, python-format
+msgid "%(count)d episode matched"
+msgid_plural "%(count)d episodes matched"
+msgstr[0] "%(count)d Episode gefunden"
+msgstr[1] "%(count)d Episoden gefunden"
+
+#: bin/gpo:537
+msgid "Use \"apply\" to apply a single-episode command"
+msgstr "Benutze \"apply\" um einen Episoden-Befehl anzuwenden"
+
+#: bin/gpo:545
 msgid "Subscription suspended"
 msgstr "Abonnement ausgesetzt"
 
-#: bin/gpo:417
+#: bin/gpo:569
 #, python-format
 msgid "%(count)d new episode"
 msgid_plural "%(count)d new episodes"
 msgstr[0] "%(count)d neue Episode"
 msgstr[1] "%(count)d neue Episoden"
 
-#: bin/gpo:423
+#: bin/gpo:584
 msgid "Checking for new episodes"
 msgstr "Neue Episoden werden gesucht"
 
-#: bin/gpo:432
+#: bin/gpo:591
 #, python-format
 msgid "Skipping %(podcast)s"
 msgstr "Überspringe %(podcast)s"
 
-#: bin/gpo:457
+#: bin/gpo:636
 #, python-format
-msgid "Downloading %(episode)s"
-msgstr "Lade %(episode)s herunter"
+msgid "Invalid episode ID: %(error)s"
+msgstr "Fehlerhafte Episoden-ID: %(error)s"
 
-#: bin/gpo:475
+#: bin/gpo:644
+#, python-format
+msgid "Episode ID not found: %(id)x"
+msgstr "Episoden-ID nicht gefunden: %(id)x"
+
+#: bin/gpo:663
+#, python-format
+msgid "Invalid action: %(action)s. Valid actions: %(valid_actions)s"
+msgstr "Ungültiger Befehl: %(action)s. Verfügbare Befehle: %(valid_actions)s"
+
+#: bin/gpo:672
+#, python-format
+msgid "Episode marked as old: %(title)s"
+msgstr "Episode als alt markiert: %(title)s"
+
+#: bin/gpo:675
+#, python-format
+msgid "Episode marked as new: %(title)s"
+msgstr "Episode als neu markiert: %(title)s"
+
+#: bin/gpo:715
+#, python-format
+msgid "Episode deleted: %(episode)s"
+msgstr "Episode gelöscht: %(episode)s"
+
+#: bin/gpo:768
+msgid "\"apply\" can only be used during an interactive session"
+msgstr "\"apply\" kann nur während einer interaktiven Sitzung verwendet werden"
+
+#: bin/gpo:772
+msgid "Empty query result (use \"query\" first)"
+msgstr "Leeres Abfrage-Ergebnis (zuerst \"query\" benutzen)"
+
+#: bin/gpo:776
+msgid "Cannot apply this command"
+msgstr "Kann diesen Befehl nicht anwenden"
+
+#: bin/gpo:787
+msgid "Please provide a search query"
+msgstr "Bitte eine Suchanfrage eingeben"
+
+#: bin/gpo:803
 #, python-format
 msgid "%(count)d episode downloaded"
 msgid_plural "%(count)d episodes downloaded"
 msgstr[0] "%(count)d Episode heruntergeladen"
 msgstr[1] "%(count)d Episoden heruntergeladen"
 
-#: bin/gpo:488
+#: bin/gpo:806
+#, python-format
+msgid "Downloading %(episode)s"
+msgstr "Lade %(episode)s herunter"
+
+#: bin/gpo:858
 #, python-format
 msgid "Subscription suspended: %(url)s"
 msgstr "Abonnement ausgesetzt: %(url)s"
 
-#: bin/gpo:500
+#: bin/gpo:879
 #, python-format
 msgid "Subscription resumed: %(url)s"
 msgstr "Abonnement fortgesetzt: %(url)s"
 
-#: bin/gpo:508
+#: bin/gpo:899
 msgid "No software updates available"
 msgstr "Keine Software-Aktualisierungen verfügbar"
 
-#: bin/gpo:510
+#: bin/gpo:901
 #, python-format
-msgid "New version %(version)s available: %(url)s"
-msgstr "Neue Version %(version)s verfügbar: %(url)s"
+msgid "New version %(latestversion)s available (released: %(latestdate)s)"
+msgstr "Neue Version %(latestversion)s verfügbar (veröffentlicht: %(latestdate)s)"
 
-#: bin/gpo:574
+#: bin/gpo:902
+#, python-format
+msgid "You have version %(thisversion)s (released: %(thisdate)s)"
+msgstr "Sie haben Version %(thisversion)s (veröffentlicht: %(thisdate)s)"
+
+#: bin/gpo:903
+#, python-format
+msgid "Download the new version from %(url)s"
+msgstr "Die neue Version kann von %(url)s heruntergeladen werden"
+
+#: bin/gpo:965
+msgid "<command>"
+msgstr "<Befehl>"
+
+#: bin/gpo:966
+#, python-format
+msgid "Use \"help %(command)s\" to get detailed help for a command"
+msgstr "Benutze \"help %(command)s\", um detaillierte Hilfe für ein Kommando zu bekommen"
+
+#: bin/gpo:972
+msgid "No documentation available (command exists)"
+msgstr "Keine Dokumentation verfügbar (Befehl existiert)"
+
+#: bin/gpo:978
+msgid "No such command"
+msgstr "Befehl existiert nicht"
+
+#: bin/gpo:1035
 #, python-format
 msgid "Syntax error: %(error)s"
 msgstr "Syntax-Fehler: %(error)s"
 
-#: bin/gpo:668
+#: bin/gpo:1127
 msgid "Incomplete command; matching commands:"
 msgstr "Unvollständiger Befehl; passende Befehle:"
 
-#: bin/gpo:672
+#: bin/gpo:1131
 msgid "Command not found"
 msgstr "Befehl nicht gefunden"

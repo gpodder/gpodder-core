@@ -765,7 +765,7 @@ class gPodderCli(object):
             - details
         """
         if is_single_command:
-            self._error(_('Apply can only be used during an interactive session'))
+            self._error(_('"apply" can only be used during an interactive session'))
             return False
 
         if not self._last_query_match:

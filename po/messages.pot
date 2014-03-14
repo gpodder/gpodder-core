@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-09-29 23:10+0200\n"
+"POT-Creation-Date: 2014-03-14 23:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,106 +18,203 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: bin/gpo:249 bin/gpo:519
+#: bin/gpo:172
+msgid "Install mygpoclient for gpodder.net features"
+msgstr ""
+
+#: bin/gpo:307 bin/gpo:946
 #, python-format
 msgid "Invalid URL: %(url)s"
 msgstr ""
 
-#: bin/gpo:262
+#: bin/gpo:320
 #, python-format
 msgid "Not subscribed to %(url)s"
 msgstr ""
 
-#: bin/gpo:266
+#: bin/gpo:332
 #, python-format
 msgid "Subscribing to %(url)s"
 msgstr ""
 
-#: bin/gpo:271
+#: bin/gpo:337
 #, python-format
 msgid "Already subscribed to %(url)s"
 msgstr ""
 
-#: bin/gpo:277
+#: bin/gpo:343
 #, python-format
 msgid "Subscription to %(url)s failed"
 msgstr ""
 
-#: bin/gpo:306
+#: bin/gpo:352
+#, python-format
+msgid "Resolved feed URL: %(url)s"
+msgstr ""
+
+#: bin/gpo:386
 #, python-format
 msgid "Configuration option %(key)s not found"
 msgstr ""
 
-#: bin/gpo:310
+#: bin/gpo:390
 #, python-format
 msgid "Invalid configuration option: %(key)s"
 msgstr ""
 
-#: bin/gpo:333
+#: bin/gpo:425
 #, python-format
 msgid "Removed %(url)s"
 msgstr ""
 
-#: bin/gpo:402
+#: bin/gpo:516
+msgid "Usage: query EQL"
+msgstr ""
+
+#: bin/gpo:535
+#, python-format
+msgid "%(count)d episode matched"
+msgid_plural "%(count)d episodes matched"
+msgstr[0] ""
+msgstr[1] ""
+
+#: bin/gpo:537
+msgid "Use \"apply\" to apply a single-episode command"
+msgstr ""
+
+#: bin/gpo:545
 msgid "Subscription suspended"
 msgstr ""
 
-#: bin/gpo:417
+#: bin/gpo:569
 #, python-format
 msgid "%(count)d new episode"
 msgid_plural "%(count)d new episodes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: bin/gpo:423
+#: bin/gpo:584
 msgid "Checking for new episodes"
 msgstr ""
 
-#: bin/gpo:432
+#: bin/gpo:591
 #, python-format
 msgid "Skipping %(podcast)s"
 msgstr ""
 
-#: bin/gpo:457
+#: bin/gpo:636
 #, python-format
-msgid "Downloading %(episode)s"
+msgid "Invalid episode ID: %(error)s"
 msgstr ""
 
-#: bin/gpo:475
+#: bin/gpo:644
+#, python-format
+msgid "Episode ID not found: %(id)x"
+msgstr ""
+
+#: bin/gpo:663
+#, python-format
+msgid "Invalid action: %(action)s. Valid actions: %(valid_actions)s"
+msgstr ""
+
+#: bin/gpo:672
+#, python-format
+msgid "Episode marked as old: %(title)s"
+msgstr ""
+
+#: bin/gpo:675
+#, python-format
+msgid "Episode marked as new: %(title)s"
+msgstr ""
+
+#: bin/gpo:715
+#, python-format
+msgid "Episode deleted: %(episode)s"
+msgstr ""
+
+#: bin/gpo:768
+msgid "\"apply\" can only be used during an interactive session"
+msgstr ""
+
+#: bin/gpo:772
+msgid "Empty query result (use \"query\" first)"
+msgstr ""
+
+#: bin/gpo:776
+msgid "Cannot apply this command"
+msgstr ""
+
+#: bin/gpo:787
+msgid "Please provide a search query"
+msgstr ""
+
+#: bin/gpo:803
 #, python-format
 msgid "%(count)d episode downloaded"
 msgid_plural "%(count)d episodes downloaded"
 msgstr[0] ""
 msgstr[1] ""
 
-#: bin/gpo:488
+#: bin/gpo:806
+#, python-format
+msgid "Downloading %(episode)s"
+msgstr ""
+
+#: bin/gpo:858
 #, python-format
 msgid "Subscription suspended: %(url)s"
 msgstr ""
 
-#: bin/gpo:500
+#: bin/gpo:879
 #, python-format
 msgid "Subscription resumed: %(url)s"
 msgstr ""
 
-#: bin/gpo:508
+#: bin/gpo:899
 msgid "No software updates available"
 msgstr ""
 
-#: bin/gpo:510
+#: bin/gpo:901
 #, python-format
-msgid "New version %(version)s available: %(url)s"
+msgid "New version %(latestversion)s available (released: %(latestdate)s)"
 msgstr ""
 
-#: bin/gpo:574
+#: bin/gpo:902
+#, python-format
+msgid "You have version %(thisversion)s (released: %(thisdate)s)"
+msgstr ""
+
+#: bin/gpo:903
+#, python-format
+msgid "Download the new version from %(url)s"
+msgstr ""
+
+#: bin/gpo:965
+msgid "<command>"
+msgstr ""
+
+#: bin/gpo:966
+#, python-format
+msgid "Use \"help %(command)s\" to get detailed help for a command"
+msgstr ""
+
+#: bin/gpo:972
+msgid "No documentation available (command exists)"
+msgstr ""
+
+#: bin/gpo:978
+msgid "No such command"
+msgstr ""
+
+#: bin/gpo:1035
 #, python-format
 msgid "Syntax error: %(error)s"
 msgstr ""
 
-#: bin/gpo:668
+#: bin/gpo:1127
 msgid "Incomplete command; matching commands:"
 msgstr ""
 
-#: bin/gpo:672
+#: bin/gpo:1131
 msgid "Command not found"
 msgstr ""
