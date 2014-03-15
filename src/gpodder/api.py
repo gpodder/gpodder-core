@@ -21,6 +21,7 @@
 
 import gpodder.core
 import gpodder.util
+import gpodder.query
 
 
 class core:
@@ -32,3 +33,7 @@ class util:
     normalize_feed_url = gpodder.util.normalize_feed_url
     remove_html_tags = gpodder.util.remove_html_tags
     format_date = gpodder.util.format_date
+
+
+class query:
+    EQL = gpodder.query.EQL
