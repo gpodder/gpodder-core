@@ -540,6 +540,17 @@ class PodcastChannel(PodcastModelObject):
     def episodes(self):
         return self.children
 
+    def rewrite_url(self, new_url):
+        new_url = self.model.normalize_feed_url(new_url)
+        if new_url is None:
+            return None
+
+        self.url = new_url
+        self.http_etag = None
+        self.http_last_modified = None
+        self.save()
+        return new_url
+
     def check_download_folder(self):
         """Check the download folder for externally-downloaded files
 
