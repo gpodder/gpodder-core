@@ -56,7 +56,7 @@ class Importer(object):
 
     VALID_TYPES = ('rss', 'link')
 
-    def __init__(self, url):
+    def __init__(self, url, opml_str=None):
         """
         Parses the OPML feed from the given URL into
         a local data structure containing channel metadata.
@@ -65,6 +65,8 @@ class Importer(object):
         try:
             if os.path.exists(url):
                 doc = xml.dom.minidom.parse(url)
+            elif opmlstring is not None:
+                doc = xml.dom.minidom.parseString(opmlstr)
             else:
                 doc = xml.dom.minidom.parseString(util.urlopen(url).read())
 
@@ -150,8 +152,6 @@ class Exporter(object):
         Returns True on success or False when there was an
         error writing the file.
         """
-        if self.filename is None:
-            return False
 
         doc = xml.dom.minidom.Document()
 
@@ -168,13 +168,16 @@ class Exporter(object):
         for channel in channels:
             body.appendChild(self.create_outline(doc, channel))
         opml.appendChild(body)
-
-        try:
-            with util.update_file_safely(self.filename) as temp_filename:
-                with open(temp_filename, 'w') as fp:
-                    fp.write(doc.toprettyxml(indent='  ', newl=os.linesep))
-        except:
-            logger.error('Could not open file for writing: %s', self.filename, exc_info=True)
-            return False
+        
+        if self.filename is None:
+            return doc.toprettyxml(indent='  ', newl=os.linesep)
+        else:
+            try:
+                with util.update_file_safely(self.filename) as temp_filename:
+                    with open(temp_filename, 'w') as fp:
+                        fp.write(doc.toprettyxml(indent='  ', newl=os.linesep))
+            except:
+                logger.error('Could not open file for writing: %s', self.filename, exc_info=True)
+                return False
 
         return True
