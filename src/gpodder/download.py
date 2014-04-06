@@ -385,8 +385,8 @@ class DownloadQueueManager(object):
 
     def __continue_check_callback(self, worker_thread):
         with self.worker_threads_access:
-            if len(self.worker_threads) > self._config.max_downloads and \
-                    self._config.max_downloads_enabled:
+            if len(self.worker_threads) > self._config.limit.downloads.concurrent and \
+                    self._config.limit.downloads.enabled:
                 self.worker_threads.remove(worker_thread)
                 return False
             else:
@@ -404,8 +404,8 @@ class DownloadQueueManager(object):
                 return
 
             if force_start or len(self.worker_threads) == 0 or \
-                    len(self.worker_threads) < self._config.max_downloads or \
-                    not self._config.max_downloads_enabled:
+                    len(self.worker_threads) < self._config.limit.downloads.concurrent or \
+                    not self._config.limit.downloads.enabled:
                 # We have to create a new thread here, there's work to do
                 logger.info('Starting new worker thread.')
 
