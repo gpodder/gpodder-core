@@ -32,7 +32,7 @@
  [ DEPENDENCIES ]
 
     - Python 3.2 or newer              http://python.org/
-    - podcastparser 0.2.1              http://gpodder.org/podcastparser/
+    - podcastparser 0.3.0              http://gpodder.org/podcastparser/
 
     Use "pip install -r requirements.txt" to install Python dependencies.
 

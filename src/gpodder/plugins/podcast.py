@@ -34,6 +34,9 @@ logger = logging.getLogger(__name__)
 
 
 class PodcastParserFeed(object):
+    # Maximum number of pages for paged feeds
+    PAGED_FEED_MAX_PAGES = 50
+
     def __init__(self, channel, max_episodes):
         url = channel.authenticate_url(channel.url)
 
@@ -52,6 +55,7 @@ class PodcastParserFeed(object):
             self.etag = info.get('etag')
             self.modified = info.get('last-modified')
             self.parsed = podcastparser.parse(url, stream, max_episodes)
+            self._handle_paged_feed(max_episodes)
         except urllib.error.HTTPError as error:
             self.status = error.code
             if error.code == 304:
@@ -87,6 +91,40 @@ class PodcastParserFeed(object):
 
     def get_payment_url(self):
         return self.parsed.get('payment_url')
+
+    def _handle_paged_feed(self, max_episodes):
+        page = 2
+        remaining_episodes = max_episodes - len(self.parsed['episodes'])
+        logger.warn('Remaining episodes: %d', remaining_episodes)
+        while ('paged_feed_next' in self.parsed and
+                page < self.PAGED_FEED_MAX_PAGES and
+                remaining_episodes > 0):
+            # Take the next page from the paged feed
+            url = self.parsed['paged_feed_next']
+            del self.parsed['paged_feed_next']
+
+            if not url:
+                break
+
+            try:
+                logger.debug('Downloading page %d from %s', page, url)
+                stream = util.urlopen(url)
+                parsed = podcastparser.parse(url, stream, remaining_episodes)
+                added_episodes = len(parsed['episodes'])
+                remaining_episodes -= added_episodes
+                logger.debug('Page %d contains %d additional episodes', page,
+                        added_episodes)
+                self.parsed['episodes'].extend(parsed['episodes'])
+
+                # Next iteration if we still have a next page
+                if 'paged_feed_next' in parsed:
+                    self.parsed['paged_feed_next'] = parsed['paged_feed_next']
+            except Exception as e:
+                logger.warn('Error while fetching feed page %d from %s: %s', page, url, e)
+                # Give up, don't try to download additional pages here
+                break
+
+            page += 1
 
     def _pick_enclosure(self, episode_dict):
         if not episode_dict['enclosures']:
