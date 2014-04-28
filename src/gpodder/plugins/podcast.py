@@ -175,9 +175,24 @@ class PodcastParserEnclosureFallbackFeed(PodcastParserFeed):
         return super(PodcastParserEnclosureFallbackFeed, self)._pick_enclosure(episode_dict)
 
 
+class PodcastParserLinkFallbackFeed(PodcastParserEnclosureFallbackFeed):
+    # Tries to use the episode link if the URL looks like an audio/video file
+    # link for episodes that do not have enclosures
+
+    def _get_enclosure_url(self, episode_dict):
+        url = episode_dict.get('link')
+        if url is not None:
+            base, extension = util.filename_from_url(url)
+            if util.file_type_by_extension(extension) in ('audio', 'video'):
+                logger.debug('Using link for enclosure URL: %s', url)
+                return url
+
+        return None
+
+
 @registry.fallback_feed_handler.register
 def podcast_parser_handler(channel, max_episodes):
-    return PodcastParserFeed(channel, max_episodes)
+    return PodcastParserLinkFallbackFeed(channel, max_episodes)
 
 
 @registry.url_shortcut.register
