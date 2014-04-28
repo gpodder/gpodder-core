@@ -95,7 +95,6 @@ class PodcastParserFeed(object):
     def _handle_paged_feed(self, max_episodes):
         page = 2
         remaining_episodes = max_episodes - len(self.parsed['episodes'])
-        logger.warn('Remaining episodes: %d', remaining_episodes)
         while ('paged_feed_next' in self.parsed and
                 page < self.PAGED_FEED_MAX_PAGES and
                 remaining_episodes > 0):
