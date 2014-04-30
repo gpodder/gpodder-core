@@ -741,6 +741,10 @@ class gPodderCli(object):
         print('Size:', self._format_filesize(episode.file_size))
         print('='*len(episode.title))
         print(episode.description)
+        if episode.chapters:
+            print('Chapters:')
+            for chapter in episode.chapters:
+                print('  %s: %s' % (util.format_time(chapter['start']), chapter['title']))
         print('')
         return True
 

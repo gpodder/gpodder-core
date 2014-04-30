@@ -87,6 +87,7 @@ EpisodeColumns = (
     'current_position_updated',
     'last_playback',
     'payment_url',
+    'chapters',
 )
 
 PodcastColumns = (
@@ -167,6 +168,7 @@ class PodcastEpisode(PodcastModelObject):
         self.published = 0
         self.download_filename = None
         self.payment_url = None
+        self.chapters = []
 
         self.state = gpodder.STATE_NORMAL
         self.is_new = True

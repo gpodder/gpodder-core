@@ -805,3 +805,8 @@ def update_file_safely(target_filename):
         return
 
     os.rename(tmp_filename, target_filename)
+
+
+def format_time(seconds):
+    dt = datetime.datetime.utcfromtimestamp(seconds)
+    return dt.strftime('%H:%M:%S')
