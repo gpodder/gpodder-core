@@ -112,7 +112,7 @@ class PodcastParserFeed(object):
                 added_episodes = len(parsed['episodes'])
                 remaining_episodes -= added_episodes
                 logger.debug('Page %d contains %d additional episodes', page,
-                        added_episodes)
+                             added_episodes)
                 self.parsed['episodes'].extend(parsed['episodes'])
 
                 # Next iteration if we still have a next page

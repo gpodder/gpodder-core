@@ -168,7 +168,7 @@ class Exporter(object):
         for channel in channels:
             body.appendChild(self.create_outline(doc, channel))
         opml.appendChild(body)
-        
+
         if self.filename is None:
             return doc.toprettyxml(indent='  ', newl=os.linesep)
         else:

@@ -152,7 +152,7 @@ class JsonConfig(object):
                 elif isinstance(value, dict):
                     # Recurse into sub-dictionaries
                     work_queue.append((data[key], value))
-                elif type(value) != type(data[key]):
+                elif isinstance(value, type(data[key])):
                     # Type mismatch of current value and default
                     if type(value) == int and type(data[key]) == float:
                         # Convert float to int if default value is int
