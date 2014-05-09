@@ -629,6 +629,8 @@ class DownloadTask(object):
 
     def add_progress_callback(self, callback):
         self._progress_updated = callback
+        # Send immediate feedback about the started download
+        self._progress_updated(self.progress)
 
     def status_updated(self, count, blockSize, totalSize):
         # We see a different "total size" while downloading,
