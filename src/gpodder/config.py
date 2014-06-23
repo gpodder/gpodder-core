@@ -69,6 +69,13 @@ defaults = {
         'cli': {
             'colors': True,
         },
+
+        # Settings for the QML UI
+        'qml': {
+            'episode_list': {
+                'filter_eql': '',
+            },
+        },
     },
 
     'plugins': {
@@ -197,6 +204,10 @@ class Config(object):
 
     def toggle_flag(self, name):
         setattr(self, name, not getattr(self, name))
+
+    def get_field(self, name):
+        """Get the current value of a field"""
+        return self._lookup(name)
 
     def update_field(self, name, new_value):
         """Update a config field, converting strings to the right types"""
