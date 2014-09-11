@@ -1,0 +1,222 @@
+# Czech gPodder translation.
+# Copyright (C) 2014 Jaroslav Lichtblau
+# This file is distributed under the same license as the gpodder package.
+# Jaroslav Lichtblau <jlichtblau@seznam.cz>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gpodder-core\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-03-14 23:28+0100\n"
+"PO-Revision-Date: 2014-09-11 09:19+0100\n"
+"Last-Translator: Jaroslav Lichtblau <jlichtblau@seznam.cz>\n"
+"Language-Team: \n"
+"Language: cs_CZ\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+
+#: bin/gpo:172
+msgid "Install mygpoclient for gpodder.net features"
+msgstr "Nainstalujte mygpoclient pro správné fungování gpodder.net"
+
+#: bin/gpo:307 bin/gpo:946
+#, python-format
+msgid "Invalid URL: %(url)s"
+msgstr "Neplatná URL: %(url)s"
+
+#: bin/gpo:320
+#, python-format
+msgid "Not subscribed to %(url)s"
+msgstr "%(url)s není odebírána"
+
+#: bin/gpo:332
+#, python-format
+msgid "Subscribing to %(url)s"
+msgstr "Začínám odebírat %(url)s"
+
+#: bin/gpo:337
+#, python-format
+msgid "Already subscribed to %(url)s"
+msgstr "%(url)s je již odebírána"
+
+#: bin/gpo:343
+#, python-format
+msgid "Subscription to %(url)s failed"
+msgstr "Odběr %(url)s selhal"
+
+#: bin/gpo:352
+#, python-format
+msgid "Resolved feed URL: %(url)s"
+msgstr "Načtena adresa URL: %(url)s"
+
+#: bin/gpo:386
+#, python-format
+msgid "Configuration option %(key)s not found"
+msgstr "Konfigurační nastavení pro %(key)s nenalezeno"
+
+#: bin/gpo:390
+#, python-format
+msgid "Invalid configuration option: %(key)s"
+msgstr "Neplatné nastavení konfigurace: %(key)s"
+
+#: bin/gpo:425
+#, python-format
+msgid "Removed %(url)s"
+msgstr "%(url)s odstraněno"
+
+#: bin/gpo:516
+msgid "Usage: query EQL"
+msgstr "Použití: query EQL"
+
+#: bin/gpo:535
+#, python-format
+msgid "%(count)d episode matched"
+msgid_plural "%(count)d episodes matched"
+msgstr[0] "nalezena %(count)d epizoda"
+msgstr[1] "nalezeny %(count)d epizody"
+msgstr[2] "nalezeno %(count)d epizod"
+
+#: bin/gpo:537
+msgid "Use \"apply\" to apply a single-episode command"
+msgstr "Použít \"apply\" jako příkaz pro jednu epizodu"
+
+#: bin/gpo:545
+msgid "Subscription suspended"
+msgstr "Odběr ukončen"
+
+#: bin/gpo:569
+#, python-format
+msgid "%(count)d new episode"
+msgid_plural "%(count)d new episodes"
+msgstr[0] "%(count)d nová epizoda"
+msgstr[1] "%(count)d nové epizody"
+msgstr[2] "%(count)d nových epizod"
+
+#: bin/gpo:584
+msgid "Checking for new episodes"
+msgstr "Hledám nové epizody"
+
+#: bin/gpo:591
+#, python-format
+msgid "Skipping %(podcast)s"
+msgstr "Přeskakuji %(podcast)s"
+
+#: bin/gpo:636
+#, python-format
+msgid "Invalid episode ID: %(error)s"
+msgstr "Neplatné ID epizody: %(error)s"
+
+#: bin/gpo:644
+#, python-format
+msgid "Episode ID not found: %(id)x"
+msgstr "ID epizody nenalezeno: %(id)x"
+
+#: bin/gpo:663
+#, python-format
+msgid "Invalid action: %(action)s. Valid actions: %(valid_actions)s"
+msgstr "Neplatný příkaz: %(action)s. Dostupné příkazy: %(valid_actions)s"
+
+#: bin/gpo:672
+#, python-format
+msgid "Episode marked as old: %(title)s"
+msgstr "Epizoda označena jako stará: %(title)s"
+
+#: bin/gpo:675
+#, python-format
+msgid "Episode marked as new: %(title)s"
+msgstr "Epizoda označena jako nová: %(title)s"
+
+#: bin/gpo:715
+#, python-format
+msgid "Episode deleted: %(episode)s"
+msgstr "Epizoda smazána: %(episode)s"
+
+#: bin/gpo:768
+msgid "\"apply\" can only be used during an interactive session"
+msgstr "\"apply\" lze použít pouze během interaktivního sezení"
+
+#: bin/gpo:772
+msgid "Empty query result (use \"query\" first)"
+msgstr "Žádný výsledek hledání (nejdříve použít \"query\")"
+
+#: bin/gpo:776
+msgid "Cannot apply this command"
+msgstr "Tento příkaz nelze použít"
+
+#: bin/gpo:787
+msgid "Please provide a search query"
+msgstr "Zadejte hledaný výraz"
+
+#: bin/gpo:803
+#, python-format
+msgid "%(count)d episode downloaded"
+msgid_plural "%(count)d episodes downloaded"
+msgstr[0] "stažena %(count)d epizoda"
+msgstr[1] "staženy %(count)d epizody"
+msgstr[2] "staženo %(count)d epizod"
+
+#: bin/gpo:806
+#, python-format
+msgid "Downloading %(episode)s"
+msgstr "Stahuje se %(episode)s"
+
+#: bin/gpo:858
+#, python-format
+msgid "Subscription suspended: %(url)s"
+msgstr "Odběr ukončen: %(url)s"
+
+#: bin/gpo:879
+#, python-format
+msgid "Subscription resumed: %(url)s"
+msgstr "Odběr obnoven: %(url)s"
+
+#: bin/gpo:899
+msgid "No software updates available"
+msgstr "Není dostupná žádná novější verze"
+
+#: bin/gpo:901
+#, python-format
+msgid "New version %(latestversion)s available (released: %(latestdate)s)"
+msgstr "Nová verze %(latestversion)s je dostupná (sestavena: %(latestdate)s)"
+
+#: bin/gpo:902
+#, python-format
+msgid "You have version %(thisversion)s (released: %(thisdate)s)"
+msgstr "Aktuální verze %(thisversion)s (sestavena: %(thisdate)s)"
+
+#: bin/gpo:903
+#, python-format
+msgid "Download the new version from %(url)s"
+msgstr "Nová verze ke stažení na %(url)s"
+
+#: bin/gpo:965
+msgid "<command>"
+msgstr "<příkaz>"
+
+#: bin/gpo:966
+#, python-format
+msgid "Use \"help %(command)s\" to get detailed help for a command"
+msgstr "Použij \"help %(command)s\" pro obdržení detailnějších informací k příkazu"
+
+#: bin/gpo:972
+msgid "No documentation available (command exists)"
+msgstr "Dokumentace není dostupná (příkaz existuje)"
+
+#: bin/gpo:978
+msgid "No such command"
+msgstr "Příkaz neexistuje"
+
+#: bin/gpo:1035
+#, python-format
+msgid "Syntax error: %(error)s"
+msgstr "Chyba syntaxe: %(error)s"
+
+#: bin/gpo:1127
+msgid "Incomplete command; matching commands:"
+msgstr "Nekompletní příkaz; odpovídající příkazy:"
+
+#: bin/gpo:1131
+msgid "Command not found"
+msgstr "Příkaz nenalezen"
