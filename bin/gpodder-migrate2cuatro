@@ -66,7 +66,8 @@ for podcast_dict in db_in.load_podcasts():
     for episode_dict in db_in.load_episodes(podcast):
         episode = model.PodcastEpisode(podcast)
         for key, value in episode_dict.items():
-            setattr(episode, key, value)
+            if key != 'sync_to_mp3_player':
+                setattr(episode, key, value)
         db_out.save_episode(episode)
 
 db_out.close()
