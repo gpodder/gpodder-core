@@ -106,6 +106,7 @@ PodcastColumns = (
     'section',
     'payment_url',
     'download_strategy',
+    'sync_to_mp3_player',
 )
 
 
