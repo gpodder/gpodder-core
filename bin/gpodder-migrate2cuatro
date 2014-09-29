@@ -60,7 +60,10 @@ db_out = storage.Database(sys.argv[1])
 for podcast_dict in db_in.load_podcasts():
     podcast = model.PodcastChannel(None)
     for key, value in podcast_dict.items():
-        setattr(podcast, key, value)
+        if hasattr(podcast, key):
+            setattr(podcast, key, value)
+        else:
+            print("""Skipping key: {} = {}""".format(key, value))
     db_out.save_podcast(podcast)
 
     for episode_dict in db_in.load_episodes(podcast):
