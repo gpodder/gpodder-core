@@ -43,6 +43,15 @@ class Database:
             data = str(gzip.open(self.filename, 'rb').read(), 'utf-8')
             self._data = json.loads(data)
 
+    def finish_migration(self):
+        for table in ('podcast', 'episode'):
+            # No items written, can start with sequence ID 1
+            if not self._data[table]:
+                continue
+
+            # Need to use a free sequence ID based on existing items
+            self._data['sequence'][table] = max(int(id) for id in self._data[table]) + 1
+
     def _read_object(self, id, table):
         yield ('id', int(id))
         for key, value in self._data[table][id].items():

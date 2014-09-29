@@ -73,4 +73,7 @@ for podcast_dict in db_in.load_podcasts():
                 setattr(episode, key, value)
         db_out.save_episode(episode)
 
+    # Update sequence numbers
+    db_out.finish_migration()
+
 db_out.close()
