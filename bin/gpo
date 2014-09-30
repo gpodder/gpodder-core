@@ -694,6 +694,10 @@ class gPodderCli(object):
         if episode is None:
             return False
 
+        if episode.state == gpodder.STATE_DOWNLOADED:
+            self._error(_('Episode already downloaded'))
+            return False
+
         self._download_episode(episode)
         self._download_summary(1)
         return True
@@ -808,6 +812,7 @@ class gPodderCli(object):
 
     def _download_episode(self, episode):
         self._start_action(_('Downloading %(episode)s') % {'episode': episode.title})
+        assert episode.state != gpodder.STATE_DOWNLOADED
         episode.download(self._update_action)
         self._finish_action()
 
