@@ -35,6 +35,9 @@ MOOGALOOP_RE = re.compile(r'http://vimeo\.com/moogaloop\.swf\?clip_id=(\d+)$', r
 SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
 DATA_CONFIG_RE = re.compile(r'data-config-url="([^"]+)"')
 
+# List of qualities, from lowest to highest
+FILEFORMAT_RANKING = ['mobile', 'sd', 'hd']
+
 
 class VimeoError(BaseException):
     pass
@@ -71,8 +74,22 @@ def vimeo_resolve_download_url(episode, config):
 
                 yield (fileformat, keys['url'])
 
-    for quality, url in get_urls(data_config_url):
-        return url
+    fileformat_to_url = dict(get_urls(data_config_url))
+
+    preferred_fileformat = config.plugins.vimeo.fileformat
+    if preferred_fileformat is not None and preferred_fileformat in fileformat_to_url:
+        logger.debug('Picking preferredformat: %s', preferred_fileformat)
+        return fileformat_to_url[preferred_fileformat]
+
+    def fileformat_sort_key_func(fileformat):
+        if fileformat in FILEFORMAT_RANKING:
+            return FILEFORMAT_RANKING.index(fileformat)
+
+        return 0
+
+    for fileformat in sorted(fileformat_to_url, key=fileformat_sort_key_func, reverse=True):
+        logger.debug('Picking best format: %s', fileformat)
+        return fileformat_to_url[fileformat]
 
 
 def get_vimeo_id(url):
