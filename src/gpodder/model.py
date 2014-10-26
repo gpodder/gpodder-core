@@ -243,7 +243,7 @@ class PodcastEpisode(PodcastModelObject):
     def download_progress(self):
         task = self.download_task
         if self.state == gpodder.STATE_DOWNLOADED:
-            return 100.0
+            return 1.0
         elif task is None:
             return 0.0
         elif not self.downloading:
