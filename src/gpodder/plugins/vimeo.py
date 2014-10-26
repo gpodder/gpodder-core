@@ -27,7 +27,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 import re
-import json
 
 VIMEOCOM_RE = re.compile(r'http://vimeo\.com/(\d+)$', re.IGNORECASE)
 VIMEOCHANNEL_RE = re.compile(r'http://vimeo\.com/([a-z0-9]+)[/]?$', re.IGNORECASE)
@@ -62,8 +61,7 @@ def vimeo_resolve_download_url(episode, config):
     data_config_url = data_config_frag.group(1).replace('&amp;', '&')
 
     def get_urls(data_config_url):
-        data_config_data = util.urlopen(data_config_url).read().decode('utf-8')
-        data_config = json.loads(data_config_data)
+        data_config = util.read_json(data_config_url)
         for fileinfo in data_config['request']['files'].values():
             if not isinstance(fileinfo, dict):
                 continue

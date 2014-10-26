@@ -23,17 +23,13 @@ import gpodder
 
 from gpodder import util
 from gpodder import registry
+from gpodder import directory
 from gpodder.plugins import podcast
 
 import os.path
 
 import logging
 logger = logging.getLogger(__name__)
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 import re
 import urllib.request
@@ -224,32 +220,6 @@ def youtube_resolve_cover_art(podcast):
     return None
 
 
-def find_youtube_channels(string):
-    url = 'http://gdata.youtube.com/feeds/api/videos?alt=json&q=%s' % urllib.parse.quote(string, '')
-    data = json.load(util.urlopen(url))
-
-    class FakeImporter(object):
-        def __init__(self):
-            self.items = []
-
-    result = FakeImporter()
-
-    seen_users = set()
-    for entry in data['feed']['entry']:
-        user = os.path.basename(entry['author'][0]['uri']['$t'])
-        title = entry['title']['$t']
-        url = 'http://www.youtube.com/rss/user/%s/videos.rss' % user
-        if user not in seen_users:
-            result.items.append({
-                'title': user,
-                'url': url,
-                'description': title
-            })
-            seen_users.add(user)
-
-    return result
-
-
 class PodcastParserYouTubeFeed(podcast.PodcastParserEnclosureFallbackFeed):
     def _get_enclosure_url(self, episode_dict):
         if is_video_link(episode_dict['link']):
@@ -294,3 +264,28 @@ def youtube_resolve_url_shortcut():
             # YouTube playlists. To get a list of playlists per-user, use:
             # https://gdata.youtube.com/feeds/api/users/<username>/playlists
             'ytpl': 'http://gdata.youtube.com/feeds/api/playlists/%s'}
+
+
+@registry.directory.register_instance
+class YouTubeSearchProvider(directory.Provider):
+    def __init__(self):
+        self.name = 'YouTube search'
+        self.kind = directory.Provider.PROVIDER_SEARCH
+
+    def on_search(self, query):
+        url = 'http://gdata.youtube.com/feeds/api/videos?alt=json&q=%s' % urllib.parse.quote(query)
+        data = util.read_json(url)
+
+        result = []
+
+        seen_users = set()
+        for entry in data['feed']['entry']:
+            user = os.path.basename(entry['author'][0]['uri']['$t'])
+            title = entry['title']['$t']
+            url = 'http://www.youtube.com/rss/user/%s/videos.rss' % user
+            if user not in seen_users:
+                result.append(directory.DirectoryEntry(user, url))
+                seen_users.add(user)
+
+        return result
+

@@ -93,6 +93,9 @@ class Core(object):
             'gpodder.plugins.youtube',
             'gpodder.plugins.vimeo',
 
+            # Directory plugins
+            'gpodder.plugins.gpoddernet',
+
             # Fallback handlers (catch-all)
             'gpodder.plugins.podcast',
         ]

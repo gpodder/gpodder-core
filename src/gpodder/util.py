@@ -48,6 +48,7 @@ import threading
 import tempfile
 import platform
 
+import json
 import urllib.parse
 import urllib.request
 import http.client
@@ -810,3 +811,25 @@ def update_file_safely(target_filename):
 def format_time(seconds):
     dt = datetime.datetime.utcfromtimestamp(seconds)
     return dt.strftime('%H:%M:%S')
+
+
+def find_command(command):
+    """
+    Searches the system's PATH for a specific command that is
+    executable by the user. Returns the first occurence of an
+    executable binary in the PATH, or None if the command is
+    not available.
+    """
+
+    if 'PATH' not in os.environ:
+        return None
+
+    for path in os.environ['PATH'].split(os.pathsep):
+        command_file = os.path.join(path, command)
+        if os.path.isfile(command_file) and os.access(command_file, os.X_OK):
+            return command_file
+
+    return None
+
+def read_json(url):
+    return json.loads(urlopen(url).read().decode('utf-8'))

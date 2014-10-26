@@ -42,13 +42,23 @@ class Resolver(object):
             if result is not None:
                 yield result
 
+    def select(self, selector):
+        for resolver in self._resolvers:
+            if selector(resolver):
+                yield resolver
+
     def register(self, func):
         logger.debug('Registering {} resolver: {}'.format(self._name, func))
         self._resolvers.append(func)
         return func
 
+    def register_instance(self, klass):
+        self._resolvers.append(klass())
+        return klass
+
     def _info(self, resolver):
-        return '%s from %s' % (resolver.__name__, resolver.__module__)
+        return '%s from %s' % (resolver.__name__ if hasattr(resolver, '__name__')
+                else resolver.__class__.__name__, resolver.__module__)
 
     def _dump(self, indent=''):
         print('== {} ({}) =='.format(self._name, self._description))
@@ -62,7 +72,8 @@ RESOLVER_NAMES = {'cover_art': 'Resolve the real cover art URL of an episode',
                   'content_type': 'Resolve the content type (audio, video) of an episode',
                   'feed_handler': 'Handle parsing of a feed',
                   'fallback_feed_handler': 'Handle parsing of a feed (catch-all)',
-                  'url_shortcut': 'Expand shortcuts when adding a new URL'}
+                  'url_shortcut': 'Expand shortcuts when adding a new URL',
+                  'directory': 'Podcast directory and search provider'}
 
 LOCALS = locals()
 
@@ -71,5 +82,5 @@ for name, description in RESOLVER_NAMES.items():
 
 
 def dump(module_dict=LOCALS):
-    for name in RESOLVER_NAMES:
+    for name in sorted(RESOLVER_NAMES):
         module_dict[name]._dump(' ')

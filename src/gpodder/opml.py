@@ -65,8 +65,8 @@ class Importer(object):
         try:
             if os.path.exists(url):
                 doc = xml.dom.minidom.parse(url)
-            elif opmlstring is not None:
-                doc = xml.dom.minidom.parseString(opmlstr)
+            elif opml_str is not None:
+                doc = xml.dom.minidom.parseString(opml_str)
             else:
                 doc = xml.dom.minidom.parseString(util.urlopen(url).read())
 

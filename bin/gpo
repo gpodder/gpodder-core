@@ -63,9 +63,10 @@
                                details) to episodes matched in the last
                                query command
 
-  - gpodder.net -
+  - Podcast directory -
 
     search QUERY               Search for podcasts on gpodder.net
+    directory                  Show all static podcast directory results
 
   - Configuration -
 
@@ -95,6 +96,7 @@ import shlex
 import pydoc
 import gettext
 import logging
+import subprocess
 
 try:
     import termios
@@ -104,12 +106,6 @@ except ImportError:
     termios = None
     fcntl = None
     struct = None
-
-try:
-    import mygpoclient.public
-except:
-    mygpoclient = None
-
 
 # A poor man's argparse/getopt - but it works for our use case :)
 verbose = False
@@ -146,6 +142,7 @@ from gpodder import opml
 from gpodder import util
 from gpodder import query
 from gpodder import registry
+from gpodder import directory
 from gpodder.config import config_value_to_string
 
 
@@ -162,19 +159,6 @@ def FirstArgumentIsPodcastURL(function):
     """Decorator for functions that take a podcast URL as first arg"""
     setattr(function, '_first_arg_is_podcast', True)
     return function
-
-def needs_mygpoclient(function):
-    """ Wrap methods that require mygpoclient """
-    @functools.wraps(function)
-    def _wrapper(self, *args, **kwargs):
-
-        if mygpoclient is None:
-            self._error(_('Install mygpoclient for gpodder.net features'))
-            return False
-
-        return function(self, *args, **kwargs)
-
-    return _wrapper
 
 def get_terminal_size():
     if None in (termios, fcntl, struct):
@@ -788,24 +772,44 @@ class gPodderCli(object):
             cmd = list(args) + ['%x' % episode_id]
             self._parse(cmd)
 
-    @needs_mygpoclient
-    def search(self, *queries):
-        """ search for podcasts on gpodder.net """
-        if not queries:
+    def search(self, *query):
+        """ search for podcasts """
+        if not query:
             self._error(_('Please provide a search query'))
             return
 
-        client = mygpoclient.public.PublicClient()
-        results = client.search_podcasts(' '.join(queries))
-        results = sorted(results, key=lambda p: p.subscribers, reverse=True)
+        query = ' '.join(query)
 
-        def _format_result(podcast, n):
-            """ formats a single search result """
-            title = '{n}. {title}'.format(n=n, title=podcast.title)
-            return '\n'.join([title, podcast.url, podcast.mygpo_link, ''])
+        def is_search_provider(provider):
+            return provider.kind == directory.Provider.PROVIDER_SEARCH
 
-        result = '\n'.join(map(_format_result, results, itertools.count(1)))
-        self._pager(result)
+        self._format_directory_results(registry.directory.select(is_search_provider),
+                lambda provider: provider.on_search(query))
+
+    def directory(self):
+        def is_static_provider(provider):
+            return provider.kind == directory.Provider.PROVIDER_STATIC
+
+        self._format_directory_results(registry.directory.select(is_static_provider),
+                lambda provider: provider.on_static())
+
+    def _format_directory_results(self, providers, get_entries_func):
+        result = []
+
+        for provider in providers:
+            result.extend([ingreen('==== {} ===='.format(provider.name)), ''])
+            def _format_result(entry):
+                if entry.subscribers > 0:
+                    title = '{} ({} subscriber(s))'.format(entry.title, entry.subscribers)
+                else:
+                    title = entry.title
+
+                return '\n'.join([title, inblue(entry.url), ''])
+
+            result.extend(_format_result(entry) for entry in get_entries_func(provider))
+            result.append('')
+
+        self._pager('\n'.join(result))
 
     def _download_summary(self, count):
         self._info(N_('%(count)d episode downloaded', '%(count)d episodes downloaded', count) % {'count': count})
@@ -1006,7 +1010,11 @@ class gPodderCli(object):
             if rows_needed < rows:
                 print(output)
             else:
-                pydoc.pager(output)
+                if util.find_command('less'):
+                    p = subprocess.Popen(['less', '-R'], stdin=subprocess.PIPE)
+                    p.communicate(output.encode(util.encoding))
+                else:
+                    pydoc.pager(output)
         else:
             print(output)
 

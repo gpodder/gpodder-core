@@ -23,22 +23,18 @@ import gpodder
 
 from gpodder import registry
 from gpodder import util
-
-import json
+from gpodder import directory
 
 import os
 import time
 
 import re
 import email
+import urllib.parse
 
 
 # gPodder's consumer key for the Soundcloud API
 CONSUMER_KEY = 'zrweghtEtnZLpXf3mlm8mQ'
-
-
-def fetch_json(url):
-    return json.loads(str(util.urlopen(url).read().decode('utf-8')))
 
 
 def soundcloud_parsedate(s):
@@ -99,7 +95,7 @@ class SoundcloudUser(object):
 
         json_url = 'http://api.soundcloud.com/users/%s.json?consumer_key=%s' %\
                    (self.username, CONSUMER_KEY)
-        user_info = fetch_json(json_url)
+        user_info = util.read_json(json_url)
         image = user_info.get('avatar_url', None)
 
         return image
@@ -114,7 +110,7 @@ class SoundcloudUser(object):
         json_url = 'http://api.soundcloud.com/users/%(user)s/%(feed)s.json?' \
                    'filter=downloadable&consumer_key=%(consumer_key)s' \
                    % {"user": self.username, "feed": feed, "consumer_key": CONSUMER_KEY}
-        tracks = (track for track in fetch_json(json_url) if track['downloadable'])
+        tracks = (track for track in util.read_json(json_url) if track['downloadable'])
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
@@ -221,3 +217,14 @@ def soundcloud_fav_feed_handler(channel, max_episodes):
 def soundcloud_resolve_url_shortcut():
     return {'sc': 'http://soundcloud.com/%s',
             'scfav': 'http://soundcloud.com/%s/favorites'}
+
+
+@registry.directory.register_instance
+class SoundcloudSearchProvider(directory.Provider):
+    def __init__(self):
+        self.name = 'Soundcloud search'
+        self.kind = directory.Provider.PROVIDER_SEARCH
+
+    def on_search(self, query):
+        json_url = 'http://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query), CONSUMER_KEY)
+        return [directory.DirectoryEntry(entry['username'], entry['permalink_url']) for entry in util.read_json(json_url)]
