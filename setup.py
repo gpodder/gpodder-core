@@ -27,7 +27,7 @@ from distutils.core import setup
 installing = ('install' in sys.argv and '--help' not in sys.argv)
 
 # Read the metadata from gPodder's __init__ module (doesn't need importing)
-main_module = open('src/gpodder/__init__.py').read().decode('utf-8')
+main_module = open('src/gpodder/__init__.py', 'rb').read().decode('utf-8')
 metadata = dict(re.findall("__([a-z_]+)__\s*=\s*'([^']+)'", main_module))
 
 author, email = re.match(r'^(.*) <(.*)>$', metadata['author']).groups()
