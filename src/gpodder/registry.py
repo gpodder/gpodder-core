@@ -42,9 +42,9 @@ class Resolver(object):
             if result is not None:
                 yield result
 
-    def select(self, selector):
+    def select(self, selector=None):
         for resolver in self._resolvers:
-            if selector(resolver):
+            if selector is None or selector(resolver):
                 yield resolver
 
     def register(self, func):
