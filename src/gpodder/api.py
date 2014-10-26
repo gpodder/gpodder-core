@@ -22,6 +22,7 @@
 import gpodder.core
 import gpodder.util
 import gpodder.query
+import gpodder.registry
 
 
 class core:
@@ -37,3 +38,6 @@ class util:
 
 class query:
     EQL = gpodder.query.EQL
+
+class registry:
+    directory = gpodder.registry.directory
