@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 import re
 
 VIMEOCOM_RE = re.compile(r'http://vimeo\.com/(\d+)$', re.IGNORECASE)
-VIMEOCHANNEL_RE = re.compile(r'http://vimeo\.com/([a-z0-9]+)[/]?$', re.IGNORECASE)
+VIMEOCHANNEL_RE = re.compile(r'http://vimeo\.com/((channels/)?[a-z0-9]+)[/]?$', re.IGNORECASE)
 MOOGALOOP_RE = re.compile(r'http://vimeo\.com/moogaloop\.swf\?clip_id=(\d+)$', re.IGNORECASE)
 SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
 DATA_CONFIG_RE = re.compile(r'data-config-url="([^"]+)"')
