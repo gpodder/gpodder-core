@@ -44,6 +44,18 @@ class Provider(object):
         self.name = ''
         self.kind = self.PROVIDER_SEARCH
 
+    def on_string(self, query):
+        if self.kind == self.PROVIDER_SEARCH:
+            return self.on_search(query)
+        elif self.kind == self.PROVIDER_URL:
+            return self.on_url(query)
+        elif self.kind == self.PROVIDER_FILE:
+            return self.on_file(query)
+        elif self.kind == self.PROVIDER_TAGCLOUD:
+            return self.on_tag(query)
+        elif self.kind == self.PROVIDER_STATIC:
+            return self.on_static()
+
     def on_search(self, query):
         # Should return a list of DirectoryEntry objects
         raise NotImplemented()
