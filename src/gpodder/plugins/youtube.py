@@ -271,6 +271,7 @@ class YouTubeSearchProvider(directory.Provider):
     def __init__(self):
         self.name = 'YouTube search'
         self.kind = directory.Provider.PROVIDER_SEARCH
+        self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
         url = 'http://gdata.youtube.com/feeds/api/videos?alt=json&q=%s' % urllib.parse.quote(query)

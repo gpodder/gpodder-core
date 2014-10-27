@@ -33,6 +33,7 @@ class GPodderNetSearchProvider(directory.Provider):
     def __init__(self):
         self.name = 'gpodder.net search'
         self.kind = directory.Provider.PROVIDER_SEARCH
+        self.priority = directory.Provider.PRIORITY_PRIMARY_SEARCH
 
     def on_search(self, query):
         return directory.directory_entry_from_mygpo_json('http://gpodder.net/search.json?q=' + urllib.parse.quote(query))
@@ -42,6 +43,7 @@ class GPodderRecommendationsProvider(directory.Provider):
     def __init__(self):
         self.name = 'Getting started'
         self.kind = directory.Provider.PROVIDER_STATIC
+        self.priority = directory.Provider.PRIORITY_GETTING_STARTED
 
     def on_static(self):
         return directory.directory_entry_from_opml('http://gpodder.org/directory.opml')
@@ -51,6 +53,7 @@ class GPodderNetToplistProvider(directory.Provider):
     def __init__(self):
         self.name = 'gpodder.net Top 50'
         self.kind = directory.Provider.PROVIDER_STATIC
+        self.priority = directory.Provider.PRIORITY_PRIMARY_TOPLIST
 
     def on_static(self):
         return directory.directory_entry_from_mygpo_json('http://gpodder.net/toplist/50.json')
@@ -60,6 +63,7 @@ class GPodderNetTagsProvider(directory.Provider):
     def __init__(self):
         self.name = 'gpodder.net Tags'
         self.kind = directory.Provider.PROVIDER_TAGCLOUD
+        self.priority = directory.Provider.PRIORITY_PRIMARY_TAGS
 
     def on_tag(self, tag):
         return directory.directory_entry_from_mygpo_json('http://gpodder.net/api/2/tag/%s/50.json' % urllib.parse.quote(tag))

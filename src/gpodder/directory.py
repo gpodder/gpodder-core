@@ -40,9 +40,16 @@ class DirectoryTag(object):
 class Provider(object):
     PROVIDER_SEARCH, PROVIDER_URL, PROVIDER_FILE, PROVIDER_TAGCLOUD, PROVIDER_STATIC = range(5)
 
+    PRIORITY_GETTING_STARTED = 900
+    PRIORITY_PRIMARY_SEARCH = 800
+    PRIORITY_PRIMARY_TOPLIST = 700
+    PRIORITY_PRIMARY_TAGS = 600
+    PRIORITY_SECONDARY_SEARCH = 200
+
     def __init__(self):
         self.name = ''
         self.kind = self.PROVIDER_SEARCH
+        self.priority = 0
 
     def on_string(self, query):
         if self.kind == self.PROVIDER_SEARCH:

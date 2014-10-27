@@ -224,6 +224,7 @@ class SoundcloudSearchProvider(directory.Provider):
     def __init__(self):
         self.name = 'Soundcloud search'
         self.kind = directory.Provider.PROVIDER_SEARCH
+        self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
         json_url = 'http://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query), CONSUMER_KEY)
