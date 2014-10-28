@@ -88,6 +88,8 @@ EpisodeColumns = (
     'last_playback',
     'payment_url',
     'chapters',
+    'subtitle',
+    'description_html',
 )
 
 PodcastColumns = (
@@ -147,7 +149,7 @@ class PodcastEpisode(PodcastModelObject):
     MAX_FILENAME_LENGTH = 200
 
     UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size',
-                   'payment_url')
+                   'payment_url', 'subtitle', 'description_html')
 
     __schema__ = EpisodeColumns
     __slots__ = __schema__
@@ -164,6 +166,8 @@ class PodcastEpisode(PodcastModelObject):
         self.mime_type = 'application/octet-stream'
         self.guid = ''
         self.description = ''
+        self.description_html = ''
+        self.subtitle = ''
         self.link = ''
         self.published = 0
         self.download_filename = None
