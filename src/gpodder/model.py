@@ -657,7 +657,7 @@ class PodcastChannel(PodcastModelObject):
             try:
                 tmp.update()
             except Exception as e:
-                logger.debug('Fetch failed. Removing buggy feed.')
+                logger.debug('Fetch failed. Removing buggy feed.', exc_info=True)
                 tmp.unsubscribe()
                 raise
 
