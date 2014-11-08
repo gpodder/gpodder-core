@@ -46,7 +46,6 @@ import time
 import datetime
 import threading
 import tempfile
-import platform
 
 import json
 import urllib.parse
@@ -62,6 +61,13 @@ try:
     locale.setlocale(locale.LC_ALL, '')
 except Exception as e:
     logger.warn('Cannot set locale (%s)', e, exc_info=True)
+
+try:
+    import platform
+    win32 = (platform.system() == 'Windows')
+except Exception as e:
+    logger.warn('Cannot determine platform (%s)', e, exc_info=True)
+    win32 = False
 
 # Native filesystem encoding detection
 encoding = sys.getfilesystemencoding()
@@ -795,7 +801,7 @@ def update_file_safely(target_filename):
         raise
 
     # No atomic rename on Windows (http://bugs.python.org/issue1704547)
-    if platform.system() == 'Windows':
+    if win32:
         if os.path.exists(target_filename):
             if os.path.exists(bak_filename):
                 os.unlink(bak_filename)
