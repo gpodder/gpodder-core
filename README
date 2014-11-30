@@ -57,22 +57,11 @@
        - doctests      http://docs.python.org/3/library/doctest
        - unittests     http://docs.python.org/3/library/unittest
 
-    If you want to add doctests, simply write the doctest and make sure that
-    the module appears in "doctest_modules" in src/gpodder/test/__init__.py.
-    For example, the doctests in src/gpodder/util.py are added as 'util' (the
-    "gpodder" prefix must not be specified there).
-
     If you want to add unit tests for a specific module (ex: gpodder.model),
-    you should add the tests as test_gpodder.model, or in other words:
+    you should add the tests as test_gpodder.test_model, or in other words:
 
         The file       src/gpodder/model.py
-        is tested by   tests/test_gpodder/model.py
-
-    After you've added the test, make sure that the module appears in
-    "test_modules" in tests/test_gpodder/__init__.py - for the example above,
-    the unittests in tests/test_gpodder/model.py are added as 'model'. For unit
-    tests, coverage reporting happens for the tested module (that's why the
-    test module name should mirror the module to be tested).
+        is tested by   tests/test_gpodder/test_model.py
 
 
  [ RUNNING AND INSTALLATION ]

@@ -46,13 +46,13 @@ class TestSectionFromContentType(unittest.TestCase):
         self.video_episode.mime_type = 'video/mp4'
 
     def test_audio(self):
-        self.podcast.children = [self.audio_episode]
+        self.podcast._children = [self.audio_episode]
         self.assertEqual(self.podcast._get_content_type(), 'audio')
 
     def test_video(self):
-        self.podcast.children = [self.video_episode]
+        self.podcast._children = [self.video_episode]
         self.assertEqual(self.podcast._get_content_type(), 'video')
 
     def test_more_video_than_audio(self):
-        self.podcast.children = [self.audio_episode, self.video_episode, self.video_episode]
+        self.podcast._children = [self.audio_episode, self.video_episode, self.video_episode]
         self.assertEqual(self.podcast._get_content_type(), 'video')
