@@ -199,8 +199,8 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
     # FYI: The omission of "%" in the list is to avoid double escaping!
     ESCAPE_CHARS = dict((ord(c), '%%%x' % ord(c)) for c in ' <>#"{}|\\^[]`')
 
-    def __init__(self, channel):
-        self.channel = channel
+    def __init__(self, podcast):
+        self.podcast = podcast
         self._auth_retry_counter = 0
         urllib.request.FancyURLopener.__init__(self, None)
 
@@ -327,10 +327,10 @@ class DownloadURLOpener(urllib.request.FancyURLopener):
         if self._auth_retry_counter > 3:
             raise AuthenticationError('Wrong username/password')
 
-        if self.channel.auth_username or self.channel.auth_password:
+        if self.podcast.auth_username or self.podcast.auth_password:
             logger.debug('Authenticating as "%s" to "%s" for realm "%s".',
-                         self.channel.auth_username, host, realm)
-            return (self.channel.auth_username, self.channel.auth_password)
+                         self.podcast.auth_username, host, realm)
+            return (self.podcast.auth_username, self.podcast.auth_password)
 
         return (None, None)
 
@@ -550,7 +550,7 @@ class DownloadTask(object):
     url = property(fget=__get_url)
 
     def __get_podcast_url(self):
-        return self.__episode.channel.url
+        return self.__episode.podcast.url
 
     podcast_url = property(fget=__get_podcast_url)
 
@@ -567,7 +567,7 @@ class DownloadTask(object):
         self.__status = DownloadTask.INIT
         self.__status_changed = True
         self.__episode = episode
-        self._config = episode.channel.model.core.config
+        self._config = episode.podcast.model.core.config
 
         # Create the target filename and save it in the database
         self.filename = self.__episode.local_filename(create=True)
@@ -727,7 +727,7 @@ class DownloadTask(object):
             # Resolve URL and start downloading the episode
             url = registry.download_url.resolve(self.__episode, self.url, self._config)
 
-            downloader = DownloadURLOpener(self.__episode.channel)
+            downloader = DownloadURLOpener(self.__episode.podcast)
 
             # HTTP Status codes for which we retry the download
             retry_codes = (408, 418, 504, 598, 599)

@@ -60,13 +60,13 @@ def fetch_channel(channel, max_episodes):
 # Our podcast model:
 #
 # model -> podcast -> episode -> download/playback
-#  podcast.parent == model
-#  podcast.children == [episode, ...]
-#  episode.parent == podcast
+#  podcast._parent == model
+#  podcast._children == [episode, ...]
+#  episode._parent == podcast
 #
-# - normally: episode.children = (None, None)
-# - downloading: episode.children = (DownloadTask(), None)
-# - playback: episode.children = (None, PlaybackTask())
+# - normally: episode._children = (None, None)
+# - downloading: episode._children = (DownloadTask(), None)
+# - playback: episode._children = (None, PlaybackTask())
 
 EpisodeColumns = (
     'podcast_id',
@@ -116,7 +116,7 @@ class PodcastModelObject(object):
     A generic base class for our podcast model providing common helper
     and utility functions.
     """
-    __slots__ = ('id', 'parent', 'children')
+    __slots__ = ('id', '_parent', '_children')
 
     @classmethod
     def build_from_iterable(cls, iterable, *args):
@@ -155,9 +155,10 @@ class PodcastEpisode(PodcastModelObject):
     __slots__ = __schema__
 
     def __init__(self, channel):
-        self.parent = channel
-        self.podcast_id = self.parent.id
-        self.children = None
+        self._parent = channel
+        self._children = None
+
+        self.podcast_id = self.podcast.id
 
         self.id = None
         self.url = ''
@@ -187,12 +188,12 @@ class PodcastEpisode(PodcastModelObject):
         self.last_playback = 0
 
     @property
-    def channel(self):
-        return self.parent
+    def podcast(self):
+        return self._parent
 
     @property
     def db(self):
-        return self.parent.parent.db
+        return self._parent._parent.db
 
     @property
     def trimmed_title(self):
@@ -205,14 +206,14 @@ class PodcastEpisode(PodcastModelObject):
 
         # "Podcast Name - Title" and "Podcast Name: Title" -> "Title"
         for postfix in (' - ', ': '):
-            prefix = self.parent.title + postfix
+            prefix = self.podcast.title + postfix
             if (self.title.startswith(prefix) and
                     len(self.title)-len(prefix) > LEFTOVER_MIN):
                 return self.title[len(prefix):]
 
         regex_patterns = [
             # "Podcast Name <number>: ..." -> "<number>: ..."
-            r'^%s (\d+: .*)' % re.escape(self.parent.title),
+            r'^%s (\d+: .*)' % re.escape(self.podcast.title),
 
             # "Episode <number>: ..." -> "<number>: ..."
             r'Episode (\d+:.*)',
@@ -225,14 +226,14 @@ class PodcastEpisode(PodcastModelObject):
                     return title
 
         # "#001: Title" -> "001: Title"
-        if (not self.parent._common_prefix and re.match('^#\d+: ', self.title) and
+        if (not self.podcast._common_prefix and re.match('^#\d+: ', self.title) and
                 len(self.title)-1 > LEFTOVER_MIN):
             return self.title[1:]
 
-        if (self.parent._common_prefix is not None and
-                self.title.startswith(self.parent._common_prefix) and
-                len(self.title)-len(self.parent._common_prefix) > LEFTOVER_MIN):
-            return self.title[len(self.parent._common_prefix):]
+        if (self.podcast._common_prefix is not None and
+                self.title.startswith(self.podcast._common_prefix) and
+                len(self.title)-len(self.podcast._common_prefix) > LEFTOVER_MIN):
+            return self.title[len(self.podcast._common_prefix):]
 
         return self.title
 
@@ -254,10 +255,10 @@ class PodcastEpisode(PodcastModelObject):
         return task.progress
 
     def _set_download_task(self, download_task):
-        self.children = download_task
+        self._children = download_task
 
     def _get_download_task(self):
-        return self.children
+        return self._children
 
     download_task = property(_get_download_task, _set_download_task)
 
@@ -316,7 +317,7 @@ class PodcastEpisode(PodcastModelObject):
             return url + '.partial'
 
         if url is None or not os.path.exists(url):
-            url = registry.download_url.resolve(self, self.url, self.parent.model.core.config)
+            url = registry.download_url.resolve(self, self.url, self.podcast.model.core.config)
 
         return url
 
@@ -325,7 +326,7 @@ class PodcastEpisode(PodcastModelObject):
         filename = filename.strip('.' + string.whitespace) + extension
 
         # Existing download folder names must not be used
-        existing_names = [episode.download_filename for episode in self.parent.episodes
+        existing_names = [episode.download_filename for episode in self.podcast.episodes
                           if episode is not self]
 
         for name in util.generate_names(filename):
@@ -373,7 +374,7 @@ class PodcastEpisode(PodcastModelObject):
         if not check_only and (force_update or not self.download_filename):
             # Avoid and catch gPodder bug 1440 and similar situations
             if template == '':
-                logger.warn('Empty template. Report this podcast URL %s', self.channel.url)
+                logger.warn('Empty template. Report this podcast URL %s', self.podcast.url)
                 template = None
 
             # Try to find a new filename for the current file
@@ -389,7 +390,7 @@ class PodcastEpisode(PodcastModelObject):
                 logger.warn('Looks like a redirection to me: %s', self.url)
 
                 try:
-                    auth_url = self.channel.authenticate_url(self.url)
+                    auth_url = self.podcast.authenticate_url(self.url)
                     resolved_url = util.urlopen(auth_url).geturl()
 
                     logger.info('Redirection resolved to: %s', resolved_url)
@@ -405,7 +406,7 @@ class PodcastEpisode(PodcastModelObject):
 
             # If the basename is empty, use the md5 hexdigest of the URL
             if not fn_template or fn_template.startswith('redirect.'):
-                logger.error('Report this feed: Podcast %s, episode %s', self.channel.url, self.url)
+                logger.error('Report this feed: Podcast %s, episode %s', self.podcast.url, self.url)
                 fn_template = hashlib.md5(self.url).hexdigest()
 
             # Find a unique filename for this episode
@@ -418,8 +419,8 @@ class PodcastEpisode(PodcastModelObject):
             # The old file exists, but we have decided to want a different filename
             if self.download_filename and wanted_filename != self.download_filename:
                 # there might be an old download folder crawling around - move it!
-                new_file_name = os.path.join(self.channel.save_dir, wanted_filename)
-                old_file_name = os.path.join(self.channel.save_dir, self.download_filename)
+                new_file_name = os.path.join(self.podcast.save_dir, wanted_filename)
+                old_file_name = os.path.join(self.podcast.save_dir, self.download_filename)
                 if os.path.exists(old_file_name) and not os.path.exists(new_file_name):
                     logger.info('Renaming %s => %s', old_file_name, new_file_name)
                     os.rename(old_file_name, new_file_name)
@@ -435,7 +436,7 @@ class PodcastEpisode(PodcastModelObject):
             self.download_filename = wanted_filename
             self.save()
 
-        return os.path.join(self.channel.save_dir, self.download_filename)
+        return os.path.join(self.podcast.save_dir, self.download_filename)
 
     def extension(self, may_call_local_filename=True):
         filename, ext = util.filename_from_url(self.url)
@@ -503,13 +504,13 @@ class PodcastChannel(PodcastModelObject):
 
     def finalize_built_object(self):
         if self.id:
-            self.children = list(sorted(self.db.load_episodes(self, self.episode_factory),
+            self._children = list(sorted(self.db.load_episodes(self, self.episode_factory),
                                         key=lambda e: (e.published, e.id), reverse=True))
             self._determine_common_prefix()
 
     def __init__(self, model):
-        self.parent = model
-        self.children = []
+        self._parent = model
+        self._children = []
 
         self.id = None
         self.url = None
@@ -536,15 +537,15 @@ class PodcastChannel(PodcastModelObject):
 
     @property
     def model(self):
-        return self.parent
+        return self._parent
 
     @property
     def db(self):
-        return self.parent.db
+        return self._parent.db
 
     @property
     def episodes(self):
-        return self.children
+        return self._children
 
     def rewrite_url(self, new_url):
         new_url = self.model.normalize_feed_url(new_url)
@@ -724,14 +725,14 @@ class PodcastChannel(PodcastModelObject):
         # downloaded and that the feed does not list as downloadable anymore
         # Keep episodes that are currently being downloaded, though (bug 1534)
         if self.id is not None:
-            episodes_to_purge = [episode for episode in self.children
+            episodes_to_purge = [episode for episode in self.episodes
                                  if episode.state != gpodder.STATE_DOWNLOADED and
                                  episode.guid not in seen_guids and not episode.downloading]
 
             for episode in episodes_to_purge:
                 logger.debug('Episode removed from feed: %s (%s)', episode.title, episode.guid)
                 self.db.delete_episode(episode)
-                self.children.remove(episode)
+                self.episodes.remove(episode)
 
         # Get most recent published of all episodes
         last_published = 0
@@ -760,11 +761,11 @@ class PodcastChannel(PodcastModelObject):
                     episode.is_new = False
                     episode.save()
 
-        # Add new episodes to children
-        self.children.extend(new_episodes)
+        # Add new episodes to episodes
+        self.episodes.extend(new_episodes)
 
         # Sort episodes by pubdate, descending
-        self.children.sort(key=lambda e: e.published, reverse=True)
+        self.episodes.sort(key=lambda e: e.published, reverse=True)
 
     def update(self):
         if self._updating:
@@ -878,11 +879,11 @@ class PodcastChannel(PodcastModelObject):
 
     def _determine_common_prefix(self):
         # We need at least 2 episodes for the prefix to be "common" ;)
-        if len(self.children) < 2:
+        if len(self.episodes) < 2:
             self._common_prefix = ''
             return
 
-        prefix = os.path.commonprefix([x.title for x in self.children])
+        prefix = os.path.commonprefix([x.title for x in self.episodes])
         # The common prefix must end with a space - otherwise it's not
         # on a word boundary, and we might end up chopping off too much
         if prefix and prefix[-1] != ' ':
@@ -891,7 +892,7 @@ class PodcastChannel(PodcastModelObject):
         self._common_prefix = prefix
 
     def get_episodes(self, state):
-        return [e for e in self.children if e.state == state]
+        return [e for e in self.episodes if e.state == state]
 
     def find_unique_folder_name(self, download_folder):
         # Remove trailing dots to avoid errors on Windows (bug 600)
@@ -954,27 +955,27 @@ class Model(object):
     def __init__(self, core):
         self.core = core
         self.db = self.core.db
-        self.children = None
+        self.podcasts = None
 
     def _append_podcast(self, podcast):
-        if podcast not in self.children:
-            self.children.append(podcast)
+        if podcast not in self.podcasts:
+            self.podcasts.append(podcast)
 
     def _remove_podcast(self, podcast):
-        self.children.remove(podcast)
+        self.podcasts.remove(podcast)
 
     def podcast_factory(self, iterable):
         return self.PodcastClass.build_from_iterable(iterable, self)
 
     def get_podcasts(self):
-        if self.children is None:
-            self.children = self.db.load_podcasts(self.podcast_factory)
+        if self.podcasts is None:
+            self.podcasts = self.db.load_podcasts(self.podcast_factory)
 
             # Check download folders for changes (bug 902)
-            for podcast in self.children:
+            for podcast in self.podcasts:
                 podcast.check_download_folder()
 
-        return self.children
+        return self.podcasts
 
     def load_podcast(self, url, create=True, authentication_tokens=None):
         assert all(url != podcast.url for podcast in self.get_podcasts())

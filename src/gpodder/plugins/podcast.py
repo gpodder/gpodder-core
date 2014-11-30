@@ -137,7 +137,7 @@ class PodcastParserFeed(object):
         return True
 
     def get_new_episodes(self, channel):
-        existing_guids = dict((episode.guid, episode) for episode in channel.children)
+        existing_guids = dict((episode.guid, episode) for episode in channel.episodes)
         seen_guids = [entry['guid'] for entry in self.parsed['episodes']]
         new_episodes = []
 

@@ -165,7 +165,7 @@ class SoundcloudFeed(object):
     def _get_new_episodes(self, channel, track_type):
         tracks = [t for t in self.sc_user.get_tracks(track_type)]
 
-        existing_guids = [episode.guid for episode in channel.children]
+        existing_guids = [episode.guid for episode in channel.episodes]
         seen_guids = [track['guid'] for track in tracks]
         new_episodes = []
 
