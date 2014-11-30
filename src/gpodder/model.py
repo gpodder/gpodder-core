@@ -43,6 +43,8 @@ import itertools
 import hashlib
 import string
 
+import minidb
+
 
 class NoHandlerForURL(Exception):
     pass
@@ -68,91 +70,64 @@ def fetch_channel(channel, max_episodes):
 # - downloading: episode._children = (DownloadTask(), None)
 # - playback: episode._children = (None, PlaybackTask())
 
-EpisodeColumns = (
-    'podcast_id',
-    'title',
-    'description',
-    'url',
-    'published',
-    'guid',
-    'link',
-    'file_size',
-    'mime_type',
-    'state',
-    'is_new',
-    'archive',
-    'download_filename',
-    'total_time',
-    'current_position',
-    'current_position_updated',
-    'last_playback',
-    'payment_url',
-    'chapters',
-    'subtitle',
-    'description_html',
-)
 
-PodcastColumns = (
-    'title',
-    'url',
-    'link',
-    'description',
-    'cover_url',
-    'auth_username',
-    'auth_password',
-    'http_last_modified',
-    'http_etag',
-    'auto_archive_episodes',
-    'download_folder',
-    'pause_subscription',
-    'section',
-    'payment_url',
-    'download_strategy',
-)
+class EpisodeModelFields(minidb.Model):
+    podcast_id = int
+    title = str
+    description = str
+    url = str
+    published = int
+    guid = str
+    link = str
+    file_size = int
+    mime_type = str
+    state = int
+    is_new = bool
+    archive = bool
+    download_filename = str
+    total_time = int
+    current_position = int
+    current_position_updated = int
+    last_playback = int
+    payment_url = str
+    chapters = minidb.JSON
+    subtitle = str
+    description_html = str
 
 
-class PodcastModelObject(object):
+class PodcastModelFields(minidb.Model):
+    title = str
+    url = str
+    link = str
+    description = str
+    cover_url = str
+    auth_username = str
+    auth_password = str
+    http_last_modified = str
+    http_etag = str
+    auto_archive_episodes = str
+    download_folder = str
+    pause_subscription = bool
+    section = str
+    payment_url = str
+    download_strategy = int
+
+
+class PodcastModelMixin(object):
     """
     A generic base class for our podcast model providing common helper
     and utility functions.
     """
-    __slots__ = ('id', '_parent', '_children')
-
-    @classmethod
-    def build_from_iterable(cls, iterable, *args):
-        """
-        Create a new object, passing "args" to the constructor
-        and then updating the object with the values from the
-        given iterable (should give (key, value) pairs).
-        """
-        o = cls(*args)
-
-        for k, v in iterable:
-            if not hasattr(o, k):
-                logger.warn('Unknown attribute: %s', k)
-                continue
-            setattr(o, k, v)
-
-        o.finalize_built_object()
-        return o
-
-    def finalize_built_object(self):
-        """
-        Carry out any post-build initialization of objects that
-        have been built with build_from_iterable()
-        """
-        pass
+    _parent = object
+    _children = object
 
 
-class PodcastEpisode(PodcastModelObject):
+class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
     """holds data for one object in a channel"""
     MAX_FILENAME_LENGTH = 200
 
     UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size',
                    'payment_url', 'subtitle', 'description_html')
-
-    __schema__ = EpisodeColumns
-    __slots__ = __schema__
 
     def __init__(self, channel):
         self._parent = channel
@@ -160,32 +135,61 @@ class PodcastEpisode(PodcastModelObject):
 
         self.podcast_id = self.podcast.id
 
-        self.id = None
-        self.url = ''
-        self.title = ''
-        self.file_size = 0
-        self.mime_type = 'application/octet-stream'
-        self.guid = ''
-        self.description = ''
-        self.description_html = ''
-        self.subtitle = ''
-        self.link = ''
-        self.published = 0
-        self.download_filename = None
-        self.payment_url = None
-        self.chapters = []
+        if self.url is None:
+            self.url = ''
 
-        self.state = gpodder.STATE_NORMAL
-        self.is_new = True
-        self.archive = channel.auto_archive_episodes
+        if self.title is None:
+            self.title = ''
+
+        if self.file_size is None:
+            self.file_size = 0
+
+        if self.mime_type is None:
+            self.mime_type = 'application/octet-stream'
+
+        if self.guid is None:
+            self.guid = ''
+
+        if self.description is None:
+            self.description = ''
+
+        if self.description_html is None:
+            self.description_html = ''
+
+        if self.subtitle is None:
+            self.subtitle = ''
+
+        if self.link is None:
+            self.link = ''
+
+        if self.published is None:
+            self.published = 0
+
+        if self.chapters is None:
+            self.chapters = []
+
+        if self.state is None:
+            self.state = gpodder.STATE_NORMAL
+
+        if self.is_new is None:
+            self.is_new = True
+
+        if self.archive is None:
+            self.archive = channel.auto_archive_episodes
 
         # Time attributes
-        self.total_time = 0
-        self.current_position = 0
-        self.current_position_updated = 0
+        if self.total_time is None:
+            self.total_time = 0
+
+        if self.current_position is None:
+            self.current_position = 0
+
+        if self.current_position_updated is None:
+            self.current_position_updated = 0
 
         # Timestamp of last playback time
-        self.last_playback = 0
+        if self.last_playback is None:
+            self.last_playback = 0
 
     @property
     def podcast(self):
@@ -273,7 +277,7 @@ class PodcastEpisode(PodcastModelObject):
                                download.DownloadTask.PAUSED)
 
     def save(self):
-        self.db.save_episode(self)
+        super().save(self.db.db)
 
     def on_downloaded(self, filename):
         self.state = gpodder.STATE_DOWNLOADED
@@ -489,9 +493,9 @@ class PodcastEpisode(PodcastModelObject):
                 setattr(self, k, episode_dict[k])
 
 
-class PodcastChannel(PodcastModelObject):
-    __schema__ = PodcastColumns
-    __slots__ = __schema__ + ('_common_prefix', '_updating')
+class PodcastChannel(PodcastModelFields, PodcastModelMixin):
+    _common_prefix = str
+    _updating = bool
 
     UNICODE_TRANSLATE = {ord('ö'): 'o', ord('ä'): 'a', ord('ü'): 'u'}
 
@@ -502,38 +506,39 @@ class PodcastChannel(PodcastModelObject):
     SECONDS_PER_WEEK = 7*24*60*60
     EpisodeClass = PodcastEpisode
 
-    def finalize_built_object(self):
-        if self.id:
-            self._children = list(sorted(self.db.load_episodes(self, self.episode_factory),
-                                        key=lambda e: (e.published, e.id), reverse=True))
-            self._determine_common_prefix()
-
     def __init__(self, model):
         self._parent = model
         self._children = []
 
-        self.id = None
-        self.url = None
-        self.title = ''
-        self.link = ''
-        self.description = ''
-        self.cover_url = None
-        self.payment_url = None
+        if self.title is None:
+            self.title = ''
 
-        self.auth_username = ''
-        self.auth_password = ''
+        if self.link is None:
+            self.link = ''
 
-        self.http_last_modified = None
-        self.http_etag = None
+        if self.description is None:
+            self.description = ''
 
-        self.auto_archive_episodes = False
-        self.download_folder = None
-        self.pause_subscription = False
+        if self.auth_username is None:
+            self.auth_username = ''
 
-        self.section = 'other'
+        if self.auth_password is None:
+            self.auth_password = ''
+
         self._common_prefix = None
         self._updating = False
-        self.download_strategy = PodcastChannel.STRATEGY_DEFAULT
+
+        if self.section is None:
+            self.section = 'other'
+
+        if self.download_strategy is None:
+            self.download_strategy = PodcastChannel.STRATEGY_DEFAULT
+
+        if self.id:
+            self._children = list(sorted(self.db.load_episodes(self, self),
+                                         key=lambda e: (e.published, e.id),
+                                         reverse=True))
+            self._determine_common_prefix()
 
     @property
     def model(self):
@@ -639,7 +644,7 @@ class PodcastChannel(PodcastModelObject):
         return re.sub('^the ', '', podcast.title.lower()).translate(cls.UNICODE_TRANSLATE)
 
     @classmethod
-    def load(cls, model, url, create=True, authentication_tokens=None):
+    def load_(cls, model, url, create=True, authentication_tokens=None):
         for podcast in model.get_podcasts():
             if podcast.url == url:
                 return podcast
@@ -678,6 +683,8 @@ class PodcastChannel(PodcastModelObject):
 
             return tmp
 
+        self.db.save_podcast(self)
+
     def episode_factory(self, iterable):
         """
         This function takes an iterable containing (key, value) pairs for
@@ -686,7 +693,7 @@ class PodcastChannel(PodcastModelObject):
 
         Returns: A new PodcastEpisode object
         """
-        return self.EpisodeClass.build_from_iterable(iterable, self)
+        return self.EpisodeClass(self, **dict(iterable))
 
     def _consume_updated_title(self, new_title):
         # Replace multi-space and newlines with single space (Maemo bug 11173)
@@ -731,7 +738,7 @@ class PodcastChannel(PodcastModelObject):
 
             for episode in episodes_to_purge:
                 logger.debug('Episode removed from feed: %s (%s)', episode.title, episode.guid)
-                self.db.delete_episode(episode)
+                episode.delete()
                 self.episodes.remove(episode)
 
         # Get most recent published of all episodes
@@ -793,14 +800,15 @@ class PodcastChannel(PodcastModelObject):
 
     def unsubscribe(self):
         self.remove_downloaded()
-        self.db.delete_podcast(self)
+        self.delete()
         self.model._remove_podcast(self)
 
     def save(self):
         if self.download_folder is None:
             self.get_save_dir()
 
-        self.db.save_podcast(self)
+        super().save(self.db.db)
+
         self.model._append_podcast(self)
 
     def get_statistics(self):
@@ -964,12 +972,9 @@ class Model(object):
     def _remove_podcast(self, podcast):
         self.podcasts.remove(podcast)
 
-    def podcast_factory(self, iterable):
-        return self.PodcastClass.build_from_iterable(iterable, self)
-
     def get_podcasts(self):
         if self.podcasts is None:
-            self.podcasts = self.db.load_podcasts(self.podcast_factory)
+            self.podcasts = list(self.db.load_podcasts(self))
 
             # Check download folders for changes (bug 902)
             for podcast in self.podcasts:
@@ -979,7 +984,7 @@ class Model(object):
 
     def load_podcast(self, url, create=True, authentication_tokens=None):
         assert all(url != podcast.url for podcast in self.get_podcasts())
-        return self.PodcastClass.load(self, url, create, authentication_tokens)
+        return self.PodcastClass.load_(self, url, create, authentication_tokens)
 
     def get_prefixes(self):
         return {k: v for s in registry.url_shortcut.each() for k, v in s.items()}

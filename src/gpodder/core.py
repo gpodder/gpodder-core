@@ -115,7 +115,7 @@ class Core(object):
     def save(self):
         # XXX: Although the function is called close(), this actually doesn't
         # close the DB, just saves the current state to disk
-        self.db.close()
+        self.db.commit()
 
     def shutdown(self):
         self.logger.info('Shutting down core')
