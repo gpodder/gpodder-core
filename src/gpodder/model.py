@@ -296,7 +296,7 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
     def age_in_days(self):
         return util.file_age_in_days(self.local_filename(create=False, check_only=True))
 
-    def delete(self):
+    def delete_download(self):
         filename = self.local_filename(create=False, check_only=True)
         if filename is not None:
             util.delete_file(filename)
@@ -580,7 +580,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
                     # File has been deleted by the user - simulate a
                     # delete event (also marks the episode as deleted)
                     logger.debug('Episode deleted: %s', filename)
-                    episode.delete()
+                    episode.delete_download()
                     continue
 
                 known_files.add(filename)
@@ -800,6 +800,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
     def unsubscribe(self):
         self.remove_downloaded()
+        self.EpisodeClass.delete_where(self.db.db, lambda c: c.podcast_id == self.id)
         self.delete()
         self.model._remove_podcast(self)
 

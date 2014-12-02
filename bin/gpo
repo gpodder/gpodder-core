@@ -760,7 +760,7 @@ class gPodderCli(object):
             return False
 
         out(inred(_('Episode deleted: %(episode)s') % {'episode': episode.title}))
-        episode.delete()
+        episode.delete_download()
         return True
 
     def _format_filesize(self, num):
