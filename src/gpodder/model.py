@@ -129,67 +129,33 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
     UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size',
                    'payment_url', 'subtitle', 'description_html')
 
+    class __minidb_defaults__:
+        url = ''
+        title = ''
+        file_size = 0
+        mime_type = 'application/octet-stream'
+        guid = ''
+        description = ''
+        description_html = ''
+        subtitle = ''
+        link = ''
+        published = 0
+        chapters = lambda o: []
+        state = gpodder.STATE_NORMAL
+        is_new = True
+        total_time = 0
+        current_position = 0
+        current_position_updated = 0
+        last_playback = 0
+
     def __init__(self, channel):
         self._parent = channel
         self._children = None
 
         self.podcast_id = self.podcast.id
 
-        if self.url is None:
-            self.url = ''
-
-        if self.title is None:
-            self.title = ''
-
-        if self.file_size is None:
-            self.file_size = 0
-
-        if self.mime_type is None:
-            self.mime_type = 'application/octet-stream'
-
-        if self.guid is None:
-            self.guid = ''
-
-        if self.description is None:
-            self.description = ''
-
-        if self.description_html is None:
-            self.description_html = ''
-
-        if self.subtitle is None:
-            self.subtitle = ''
-
-        if self.link is None:
-            self.link = ''
-
-        if self.published is None:
-            self.published = 0
-
-        if self.chapters is None:
-            self.chapters = []
-
-        if self.state is None:
-            self.state = gpodder.STATE_NORMAL
-
-        if self.is_new is None:
-            self.is_new = True
-
         if self.archive is None:
             self.archive = channel.auto_archive_episodes
-
-        # Time attributes
-        if self.total_time is None:
-            self.total_time = 0
-
-        if self.current_position is None:
-            self.current_position = 0
-
-        if self.current_position_updated is None:
-            self.current_position_updated = 0
-
-        # Timestamp of last playback time
-        if self.last_playback is None:
-            self.last_playback = 0
 
     @property
     def podcast(self):
@@ -506,33 +472,20 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
     SECONDS_PER_WEEK = 7*24*60*60
     EpisodeClass = PodcastEpisode
 
+    class __minidb_defaults__:
+        title = ''
+        link = ''
+        description = ''
+        auth_username = ''
+        auth_password = ''
+        section = 'other'
+        download_strategy = lambda o: o.STRATEGY_DEFAULT
+
     def __init__(self, model):
         self._parent = model
         self._children = []
-
-        if self.title is None:
-            self.title = ''
-
-        if self.link is None:
-            self.link = ''
-
-        if self.description is None:
-            self.description = ''
-
-        if self.auth_username is None:
-            self.auth_username = ''
-
-        if self.auth_password is None:
-            self.auth_password = ''
-
         self._common_prefix = None
         self._updating = False
-
-        if self.section is None:
-            self.section = 'other'
-
-        if self.download_strategy is None:
-            self.download_strategy = PodcastChannel.STRATEGY_DEFAULT
 
         if self.id:
             self._children = list(sorted(self.db.load_episodes(self, self),

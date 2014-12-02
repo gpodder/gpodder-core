@@ -22,10 +22,10 @@ from gpodder import model
 
 
 class Database:
-    def __init__(self, filename):
+    def __init__(self, filename, debug=False):
         self.filename = filename + '.minidb'
 
-        self.db = minidb.Store(self.filename, debug=True)
+        self.db = minidb.Store(self.filename, debug=debug, smartupdate=True)
         self.db.register(model.PodcastEpisode)
         self.db.register(model.PodcastChannel)
 
@@ -39,4 +39,5 @@ class Database:
         self.db.commit()
 
     def close(self):
+        self.db.commit()
         self.db.close()

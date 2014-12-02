@@ -71,7 +71,7 @@ class Core(object):
         util.make_directory(self.config_home)
 
         # Open the database and configuration file
-        self.db = database_class(database_file)
+        self.db = database_class(database_file, verbose)
         self.model = model_class(self)
         self.config = config_class(config_file)
 
