@@ -488,9 +488,9 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         self._updating = False
 
         if self.id:
-            self._children = list(sorted(self.db.load_episodes(self, self),
-                                         key=lambda e: (e.published, e.id),
-                                         reverse=True))
+            self._children = sorted(self.db.load_episodes(self, self),
+                                    key=lambda e: (e.published, e.id),
+                                    reverse=True)
             self._determine_common_prefix()
 
     @property
@@ -538,31 +538,29 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
                 known_files.add(filename)
 
-        existing_files = set(filename for filename in glob.glob(os.path.join(self.save_dir, '*'))
-                             if not filename.endswith('.partial'))
+        known_files.union(os.path.join(self.save_dir, 'folder' + ext)
+                          for ext in coverart.CoverDownloader.EXTENSIONS)
 
-        ignore_files = ['folder'+ext for ext in coverart.CoverDownloader.EXTENSIONS]
+        existing_files = {filename for filename in
+                          glob.glob(os.path.join(self.save_dir, '*'))
+                          if not filename.endswith('.partial')}
 
-        external_files = existing_files.difference(list(known_files) +
-                                                   [os.path.join(self.save_dir, ignore_file)
-                                                    for ignore_file in ignore_files])
+        external_files = existing_files.difference(known_files)
         if not external_files:
             return
-
-        all_episodes = self.episodes
 
         for filename in external_files:
             found = False
 
             basename = os.path.basename(filename)
-            existing = [e for e in all_episodes if e.download_filename == basename]
-            if existing:
-                existing = existing[0]
+            existing = next((episode for episode in self.episodes
+                             if episode.download_filename == basename), None)
+            if existing is not None:
                 logger.info('Importing external download: %s', filename)
                 existing.on_downloaded(filename)
                 continue
 
-            for episode in all_episodes:
+            for episode in self.episodes:
                 wanted_filename = episode.local_filename(create=True, return_wanted_filename=True)
                 if basename == wanted_filename:
                     logger.info('Importing external download: %s', filename)
