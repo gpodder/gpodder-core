@@ -149,6 +149,15 @@
 
         export GPODDER_WRITE_LOGS=no
 
+ [ AUTOMATIC DOWNLOADING ]
+
+    If you are using gPodder on a server, you can add the following command
+    to your crontab(5) to automatically check for episodes and download them:
+
+        gpo run --batch
+
+    It will only show output if new episodes are found (or if there was an
+    error updating feeds) and/or downloaded, which is useful for cronjobs.
 
  [ MORE INFORMATION ]
 
@@ -158,5 +167,5 @@
     - IRC channel                      #gpodder on irc.freenode.net
 
   ............................................................................
-             Last updated: 2013-09-29 by Thomas Perl <thp.io/about>
+             Last updated: 2014-12-23 by Thomas Perl <thp.io/about>
 

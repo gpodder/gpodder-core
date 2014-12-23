@@ -28,10 +28,11 @@ import traceback
 logger = logging.getLogger(__name__)
 
 
-def setup(home=None, verbose=True):
+def setup(home=None, verbose=True, stdout=False):
     # Configure basic stdout logging
-    STDOUT_FMT = '%(created)f [%(name)s] %(levelname)s: %(message)s'
-    logging.basicConfig(format=STDOUT_FMT, level=logging.DEBUG if verbose else logging.WARNING)
+    STDOUT_FMT = '%(asctime)s [%(name)s] %(levelname)s: %(message)s'
+    logging.basicConfig(format=STDOUT_FMT, level=logging.DEBUG if verbose else logging.WARNING,
+                        stream=sys.stdout if stdout else sys.stderr)
 
     # Replace except hook with a custom one that logs it as an error
     original_excepthook = sys.excepthook

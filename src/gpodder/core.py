@@ -38,7 +38,8 @@ class Core(object):
                  database_class=storage.Database,
                  model_class=model.Model,
                  verbose=True,
-                 progname='gpodder'):
+                 progname='gpodder',
+                 stdout=False):
         self._set_socket_timeout()
 
         home = os.path.expanduser('~')
@@ -57,7 +58,7 @@ class Core(object):
             self.data_home = self.config_home = self.cache_home = home
 
         # Setup logging
-        log.setup(self.cache_home, verbose)
+        log.setup(self.cache_home, verbose, stdout)
         self.logger = logging.getLogger(__name__)
 
         config_file = os.path.join(self.config_home, 'Settings.json')

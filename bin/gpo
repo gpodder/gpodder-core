@@ -24,7 +24,7 @@
 
 
 """
-  Usage: gpo [--verbose|-v] [COMMAND] [params...]
+  Usage: gpo [--verbose|-v] [--batch|-b] [--help|-h] [COMMAND] [params...]
 
   - Subscription management -
 
@@ -46,13 +46,13 @@
   - Episode management -
 
     download [URL]             Download new episodes (all or only from URL)
+
     pending [URL]              List new episodes (all or only from URL)
     episodes [URL]             List episodes (all or only from URL)
     query EQL                  Query episodes based on an EQL expression
 
-                               "pending", "episodes" and "query" show an
-                               alphanumeric ID of the episode that can be
-                               used with the following commands:
+  The commands "pending", "episodes" and "query" show an alphanumeric ID of
+  the episode that can be used with the following commands:
 
     mark old|new EPISODE       Mark episode as old or new (new = pending)
     fetch EPISODE              Download a single episode now
@@ -74,6 +74,7 @@
 
   - Other commands -
 
+    run                        Update and download episodes (useful with -b)
     versioncheck               Check if a new gPodder version is available
     license                    Show the software license information
     registry                   Print registered resolvers
@@ -108,12 +109,25 @@ except ImportError:
     struct = None
 
 # A poor man's argparse/getopt - but it works for our use case :)
-verbose = False
-for flag in ('-v', '--verbose'):
-    if flag in sys.argv:
-        sys.argv.remove(flag)
-        verbose = True
-        break
+class Flags:
+    verbose = ('-v', '--verbose')
+    batch = ('-b', '--batch')
+
+    @classmethod
+    def _parse(cls, argv):
+        for key in vars(cls):
+            if key.startswith('_'):
+                continue
+            setattr(cls, key, sum(cls._eat_argv(argv, getattr(cls, key))))
+
+    @classmethod
+    def _eat_argv(cls, args, candidates):
+        for candidate in candidates:
+            while candidate in args:
+                args.remove(candidate)
+                yield 1
+
+Flags._parse(sys.argv)
 
 gpodder_script = sys.argv[0]
 if os.path.islink(gpodder_script):
@@ -132,8 +146,8 @@ translation = gettext.translation('gpodder', fallback=True)
 _ = translation.gettext
 N_ = translation.ngettext
 
-have_ansi = sys.stdout.isatty()
-interactive_console = sys.stdin.isatty() and sys.stdout.isatty()
+have_ansi = sys.stdout.isatty() and not Flags.batch
+interactive_console = sys.stdin.isatty() and sys.stdout.isatty() and not Flags.batch
 is_single_command = False
 
 import gpodder
@@ -153,6 +167,20 @@ def incolor(color_id, s):
 
 # ANSI Colors: red = 1, green = 2, yellow = 3, blue = 4
 inred, ingreen, inyellow, inblue = (functools.partial(incolor, x) for x in range(1, 5))
+
+LOG_LEVEL_PRINT = 60
+logging.addLevelName(LOG_LEVEL_PRINT, 'OUT')
+
+
+def out(*args, **kwargs):
+    if Flags.batch:
+        sep = kwargs.get('sep', ' ')
+        message = sep.join(a.strip() for a in args)
+        if message:
+            for line in message.split('\n'):
+                logger.log(LOG_LEVEL_PRINT, line)
+    else:
+        print(*args, **kwargs)
 
 
 def FirstArgumentIsPodcastURL(function):
@@ -176,12 +204,13 @@ class gPodderCli(object):
     EXIT_COMMANDS = ('quit', 'exit', 'bye')
 
     def __init__(self, verbose):
-        self.core = core.Core(verbose=verbose)
+        self.core = core.Core(verbose=verbose, stdout=Flags.batch)
         self._db = self.core.db
         self._config = self.core.config
         self._model = self.core.model
 
         self._current_action = ''
+        self._current_progress = -1
         self._commands = dict((name.rstrip('_'), func) for name, func in inspect.getmembers(self)
                               if inspect.ismethod(func) and not name.startswith('_'))
         self._prefixes, self._expansions = self._build_prefixes_expansions()
@@ -224,17 +253,32 @@ class gPodderCli(object):
         else:
             line = line + (' '*(self.COLUMNS-7-len(line)))
         self._current_action = line
-        print(self._current_action, end='')
+        self._current_progress = -1
+        if not Flags.batch:
+            out(self._current_action, '[....]', end='')
         self._update_action()
 
     def _update_action(self, progress=None):
-        if have_ansi:
-            if progress is None:
-                result = '[....]'
-            else:
-                progress = '%3.0f%%' % (progress*100.,)
-                result = '['+inblue(progress)+']'
-            print('\r' + self._current_action + result, end='')
+        if Flags.batch:
+            # Don't show progress when in batch mode
+            return
+
+        if progress is None:
+            if self._current_progress == -1:
+                # No need to update the status message
+                return
+            self._current_progress = -1
+            result = '[....]'
+        else:
+            new_progress = int(progress * 100)
+            if new_progress == self._current_progress:
+                # No need to update the status message
+                return
+            self._current_progress = new_progress
+            progress = '%3d%%' % (self._current_progress,)
+            result = '['+inblue(progress)+']'
+
+        out(('' if Flags.batch else '\r') + self._current_action, result, end='')
 
     def _finish_action(self, success=True, skip=False):
         if skip:
@@ -244,10 +288,7 @@ class gPodderCli(object):
         else:
             result = '['+inred('FAIL')+']'
 
-        if have_ansi:
-            print('\r' + self._current_action + result)
-        else:
-            print(result)
+        out(('' if Flags.batch else '\r') + self._current_action, result)
         self._current_action = ''
 
     def _atexit(self):
@@ -346,7 +387,7 @@ class gPodderCli(object):
         for key in sorted(self._config.all_keys()):
             if search_for is None or search_for.lower() in key.lower():
                 value = config_value_to_string(self._config._lookup(key))
-                print(key, '=', value)
+                out(key, '=', value)
 
     def set(self, key=None, value=None):
         """Get and set configuration values
@@ -519,14 +560,14 @@ class gPodderCli(object):
         output.append(N_('%(count)d episode matched', '%(count)d episodes matched', count) % {'count': count})
         if count:
             output.append(inblue(_('Use "apply" to apply a single-episode command')))
-        print('\n'.join(output))
+        out('\n'.join(output))
         return True
 
     def _format_podcast(self, podcast):
         if not podcast.pause_subscription:
             return ' '.join(('#', ingreen(podcast.title)))
 
-        return ''.join(('#', inred(podcast.title), '-', _('Subscription suspended')))
+        return ' '.join(('#', inred(podcast.title), '-', _('Subscription suspended')))
 
     def list(self):
         """List all podcast subscriptions
@@ -536,21 +577,39 @@ class gPodderCli(object):
             Lists all subscribed podcasts (title and URL)
         """
         for podcast in self._model.get_podcasts():
-            print(self._format_podcast(podcast))
-            print(podcast.url)
+            out(self._format_podcast(podcast))
+            out(podcast.url)
 
         return True
 
     def _update_podcast(self, podcast):
-        self._start_action(' %s', podcast.title)
+        if not Flags.batch:
+            self._start_action(podcast.title)
         try:
             podcast.update()
-            self._finish_action()
+            if not Flags.batch:
+                self._finish_action()
         except Exception as e:
+            if Flags.batch:
+                self._start_action(podcast.title)
             self._finish_action(False)
 
     def _pending_message(self, count):
+        if Flags.batch and count == 0:
+            # Don't announce non-actions in batch mode
+            return ''
+
         return N_('%(count)d new episode', '%(count)d new episodes', count) % {'count': count}
+
+    def run(self):
+        """Check for new episodes, then download them
+
+        run
+
+            Run "update" and then "download" in sequence
+        """
+        self.update()
+        self.download()
 
     @FirstArgumentIsPodcastURL
     def update(self, url=None):
@@ -565,18 +624,18 @@ class gPodderCli(object):
             Check for new episodes in the given subscription only
         """
         count = 0
-        print(_('Checking for new episodes'))
-        for podcast in self._get_podcasts(url):
+        if not Flags.batch:
+            out(_('Checking for new episodes'))
 
+        for podcast in self._get_podcasts(url):
             if not podcast.pause_subscription:
                 self._update_podcast(podcast)
                 count += sum(1 for e in podcast.episodes if self._is_episode_new(e))
-            else:
-                self._start_action(_('Skipping %(podcast)s') % {
-                    'podcast': podcast.title})
+            elif not Flags.batch:
+                self._start_action(podcast.title)
                 self._finish_action(skip=True)
 
-        print(inblue(self._pending_message(count)))
+        out(inblue(self._pending_message(count)))
         return True
 
     def _get_podcasts(self, url):
@@ -605,12 +664,12 @@ class gPodderCli(object):
             for episode in podcast.episodes:
                 if self._is_episode_new(episode):
                     if not podcast_printed:
-                        print('#', ingreen(podcast.title))
+                        out('#', ingreen(podcast.title))
                         podcast_printed = True
-                    print(' ', '[%04x]' % episode.id, episode.title)
+                    out(' ', '[%04x]' % episode.id, episode.title)
                     count += 1
 
-        print(inblue(self._pending_message(count)))
+        out(inblue(self._pending_message(count)))
         return True
 
     def _lookup_episode(self, episode_id):
@@ -700,7 +759,7 @@ class gPodderCli(object):
         if episode is None:
             return False
 
-        print(inred(_('Episode deleted: %(episode)s') % {'episode': episode.title}))
+        out(inred(_('Episode deleted: %(episode)s') % {'episode': episode.title}))
         episode.delete()
         return True
 
@@ -724,16 +783,16 @@ class gPodderCli(object):
         if episode is None:
             return False
 
-        print('[%04x]' % episode.id, inblue(episode.title))
-        print('from', ingreen(episode.parent.title))
-        print('Size:', self._format_filesize(episode.file_size))
-        print('='*len(episode.title))
-        print(episode.description)
+        out('[%04x]' % episode.id, inblue(episode.title))
+        out('from', ingreen(episode.parent.title))
+        out('Size:', self._format_filesize(episode.file_size))
+        out('='*len(episode.title))
+        out(episode.description)
         if episode.chapters:
-            print('Chapters:')
+            out('Chapters:')
             for chapter in episode.chapters:
-                print('  %s: %s' % (util.format_time(chapter['start']), chapter['title']))
-        print('')
+                out('  %s: %s' % (util.format_time(chapter['start']), chapter['title']))
+        out('')
         return True
 
     def apply(self, *args):
@@ -812,6 +871,10 @@ class gPodderCli(object):
         self._pager('\n'.join(result))
 
     def _download_summary(self, count):
+        if Flags.batch and count == 0:
+            # Don't announce non-actions in batch mode
+            return
+
         self._info(N_('%(count)d episode downloaded', '%(count)d episodes downloaded', count) % {'count': count})
 
     def _download_episode(self, episode):
@@ -840,7 +903,7 @@ class gPodderCli(object):
             for episode in podcast.episodes:
                 if self._is_episode_new(episode):
                     if not podcast_printed:
-                        print(inblue(podcast.title))
+                        out(inblue(podcast.title))
                         podcast_printed = True
                     self._download_episode(episode)
                     count += 1
@@ -942,7 +1005,7 @@ class gPodderCli(object):
         """
         placeholder = ingreen('<name>')
         for key, value in sorted(self.core.model.get_prefixes().items()):
-            print(':'.join((key, placeholder)), '->', value.replace('%s', placeholder))
+            out(':'.join((key, placeholder)), '->', value.replace('%s', placeholder))
 
     @FirstArgumentIsPodcastURL
     def rewrite(self, old_url, new_url):
@@ -974,9 +1037,9 @@ class gPodderCli(object):
             Show help about the subscribe command
         """
         if command is None:
-            print(stylize(__doc__), file=sys.stderr, end='')
+            out(stylize(__doc__), end='')
             fmt = {'command': inblue(_('<command>'))}
-            print(_('Use "help %(command)s" to get detailed help for a command') % fmt)
+            out(_('Use "help %(command)s" to get detailed help for a command') % fmt)
             return True
 
         if command in self._commands:
@@ -985,7 +1048,7 @@ class gPodderCli(object):
                 self._error(_('No documentation available (command exists)'))
                 return False
             else:
-                print('', docize(doc, command), '', sep='\n')
+                out('', docize(doc, command), '', sep='\n')
                 return True
 
         self._error(_('No such command'))
@@ -1008,7 +1071,7 @@ class gPodderCli(object):
             rows_needed = len(output.splitlines()) + 2
             rows, cols = get_terminal_size()
             if rows_needed < rows:
-                print(output)
+                out(output)
             else:
                 if util.find_command('less'):
                     p = subprocess.Popen(['less', '-R'], stdin=subprocess.PIPE)
@@ -1016,10 +1079,10 @@ class gPodderCli(object):
                 else:
                     pydoc.pager(output)
         else:
-            print(output)
+            out(output)
 
     def _shell(self):
-        print(os.linesep.join(x.strip() for x in ("""
+        out(os.linesep.join(x.strip() for x in ("""
         gPodder %(__version__)s "%(__relname__)s" (%(__date__)s) - %(__url__)s
         %(__copyright__)s
         License: %(__license__)s (type 'license' for details)
@@ -1037,10 +1100,10 @@ class gPodderCli(object):
             try:
                 line = input('gpo> ')
             except EOFError:
-                print('')
+                out('')
                 break
             except KeyboardInterrupt:
-                print('')
+                out('')
                 continue
 
             if self._prefixes.get(line, line) in self.EXIT_COMMANDS:
@@ -1056,7 +1119,7 @@ class gPodderCli(object):
                 self._parse(args)
             except KeyboardInterrupt:
                 self._error('Keyboard interrupt.')
-                if verbose:
+                if Flags.verbose:
                     raise
             except EOFError:
                 self._error('EOF.')
@@ -1064,13 +1127,13 @@ class gPodderCli(object):
         self._atexit()
 
     def _error(self, *args):
-        print(inred(' '.join(args)), file=sys.stderr)
+        out(inred(' '.join(args)))
 
     # Warnings look like error messages for now
     _warn = _error
 
     def _info(self, *args):
-        print(*args)
+        out(*args)
 
     def _checkargs(self, func, command_line):
         args, varargs, keywords, defaults = inspect.getargspec(func)
@@ -1132,8 +1195,9 @@ class gPodderCli(object):
 
         command = command_line.pop(0)
 
-        # Resolve command aliases
-        command = self._prefixes.get(command, command)
+        if not Flags.batch:
+            # Resolve command aliases, but only if not in batch mode
+            command = self._prefixes.get(command, command)
 
         if command in self._commands:
             func = self._commands[command]
@@ -1141,9 +1205,9 @@ class gPodderCli(object):
                 return self._checkargs(func, command_line)
 
         if command in self._expansions:
-            print(_('Incomplete command; matching commands:'))
+            out(_('Incomplete command; matching commands:'))
             for cmd in self._expansions[command]:
-                print('   ', inblue(cmd))
+                out('   ', inblue(cmd))
         else:
             self._error(_('Command not found'))
 
@@ -1160,15 +1224,15 @@ def docize(s, cmd):
     return s
 
 if __name__ == '__main__':
-    logger = logging.getLogger(__name__)
-    cli = gPodderCli(verbose)
+    logger = logging.getLogger(os.path.basename(sys.argv[0]))
+    cli = gPodderCli(Flags.verbose)
     args = sys.argv[1:]
+    if args and args[0] in ('--help', '-h'):
+        args[0] = 'help'
     if args:
         is_single_command = True
         cli._parse_single(args)
     elif interactive_console:
         cli._shell()
     else:
-        print(__doc__, end='')
-    #for loader, key in sorted((repr(value), key) for key, value in sys.modules.items()):
-    #    print('%20s  -> %20r' % (key, loader))
+        out(__doc__, end='')
