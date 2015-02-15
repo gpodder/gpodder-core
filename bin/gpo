@@ -354,7 +354,7 @@ class gPodderCli(object):
 
         Use {shortcuts} for a list of shortcut URLs you can use here.
         """
-        self._start_action(_('Subscribing to %(url)s') % {'url': url})
+        self._start_action(_('Subscribing to %(url)s'), {'url': url})
 
         existing = self._get_podcast(url, check_only=True)
         if existing is not None:
@@ -584,14 +584,14 @@ class gPodderCli(object):
 
     def _update_podcast(self, podcast):
         if not Flags.batch:
-            self._start_action(podcast.title)
+            self._start_action('%s', podcast.title)
         try:
             podcast.update()
             if not Flags.batch:
                 self._finish_action()
         except Exception as e:
             if Flags.batch:
-                self._start_action(podcast.title)
+                self._start_action('%s', podcast.title)
             self._finish_action(False)
 
     def _pending_message(self, count):
@@ -632,7 +632,7 @@ class gPodderCli(object):
                 self._update_podcast(podcast)
                 count += sum(1 for e in podcast.episodes if self._is_episode_new(e))
             elif not Flags.batch:
-                self._start_action(podcast.title)
+                self._start_action('%s', podcast.title)
                 self._finish_action(skip=True)
 
         out(inblue(self._pending_message(count)))
@@ -878,7 +878,7 @@ class gPodderCli(object):
         self._info(N_('%(count)d episode downloaded', '%(count)d episodes downloaded', count) % {'count': count})
 
     def _download_episode(self, episode):
-        self._start_action(_('Downloading %(episode)s') % {'episode': episode.title})
+        self._start_action(_('Downloading %(episode)s'), {'episode': episode.title})
         assert episode.state != gpodder.STATE_DOWNLOADED
         episode.download(self._update_action)
         self._finish_action()
