@@ -20,14 +20,68 @@ import minidb
 
 from gpodder import model
 
+import json
+import os
+import gzip
+import re
+
+import logging
+logger = logging.getLogger(__name__)
+
+
+class MigrateJSONDBToMiniDB:
+    def __init__(self, db):
+        self.db = db
+        self.jsondb_filename = re.sub(r'\.minidb$', '.jsondb', self.db.filename)
+
+    def _append_podcast(self, podcast):
+        # Dummy function to work as drop-in model.Model replacement
+        ...
+
+    def migrate(self):
+        podcasts = {}
+        classes = {
+            'podcast': model.PodcastChannel,
+            'episode': model.PodcastEpisode,
+        }
+
+        if os.path.exists(self.jsondb_filename):
+            logger.info('Migrating from jsondb to minidb')
+            data = json.loads(str(gzip.open(self.jsondb_filename, 'rb').read(), 'utf-8'))
+            for table in ('podcast', 'episode'):
+                cls = classes[table]
+                for key, item in data[table].items():
+                    if table == 'podcast':
+                        o = cls(self)
+                        podcasts[int(key)] = o
+                    elif table == 'episode':
+                        o = cls(podcasts[item['podcast_id']])
+
+                    for k, v in item.items():
+                        if k == 'podcast_id':
+                            # Don't set the podcast id (will be set automatically)
+                            continue
+
+                        if hasattr(o, k):
+                            setattr(o, k, v)
+                        else:
+                            logger.warn('Skipping %s attribute: %s', table, k)
+
+                    o.save()
+
 
 class Database:
     def __init__(self, filename, debug=False):
         self.filename = filename + '.minidb'
 
+        need_migration = not os.path.exists(self.filename)
+
         self.db = minidb.Store(self.filename, debug=debug, smartupdate=True)
         self.db.register(model.PodcastEpisode)
         self.db.register(model.PodcastChannel)
+
+        if need_migration:
+            MigrateJSONDBToMiniDB(self).migrate()
 
     def load_podcasts(self, *args):
         return model.PodcastChannel.load(self.db)(*args)
