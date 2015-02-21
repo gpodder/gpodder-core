@@ -33,6 +33,7 @@
 
     - Python 3.2 or newer              http://python.org/
     - podcastparser 0.4.0              http://gpodder.org/podcastparser/
+    - minidb 2                         http://github.com/thp/minidb
 
     Use "pip install -r requirements.txt" to install Python dependencies.
 
