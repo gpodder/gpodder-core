@@ -57,6 +57,10 @@ class MigrateJSONDBToMiniDB:
                         o = cls(self)
                         podcasts[int(key)] = o
                     elif table == 'episode':
+                        if item['podcast_id'] not in podcasts:
+                            logger.warn('Skipping orphaned episode: %s (podcast_id=%r)',
+                                        item['title'], item['podcast_id'])
+                            continue
                         o = cls(podcasts[item['podcast_id']])
 
                     for k, v in item.items():
@@ -70,6 +74,8 @@ class MigrateJSONDBToMiniDB:
                             logger.warn('Skipping %s attribute: %s', table, k)
 
                     o.save()
+
+            os.rename(self.jsondb_filename, self.jsondb_filename + '.migrated')
 
 
 class Database:
