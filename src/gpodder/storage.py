@@ -19,11 +19,13 @@
 import minidb
 
 from gpodder import model
+from gpodder import util
 
 import json
 import os
 import gzip
 import re
+import sys
 
 import logging
 logger = logging.getLogger(__name__)
@@ -81,7 +83,14 @@ class Database:
         self.db.register(model.PodcastChannel)
 
         if need_migration:
-            MigrateJSONDBToMiniDB(self).migrate()
+            try:
+                MigrateJSONDBToMiniDB(self).migrate()
+            except Exception as e:
+                logger.fatal('Could not migrate database: %s', e, exc_info=True)
+                self.db.close()
+                self.db = None
+                util.delete_file(self.filename)
+                sys.exit(1)
 
     def load_podcasts(self, *args):
         return model.PodcastChannel.load(self.db)(*args)
