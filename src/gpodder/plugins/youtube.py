@@ -289,4 +289,3 @@ class YouTubeSearchProvider(directory.Provider):
                 seen_users.add(user)
 
         return result
-

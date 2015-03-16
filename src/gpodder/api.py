@@ -39,5 +39,6 @@ class util:
 class query:
     EQL = gpodder.query.EQL
 
+
 class registry:
     directory = gpodder.registry.directory

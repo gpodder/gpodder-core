@@ -31,6 +31,7 @@ class DirectoryEntry(object):
         self.subscribers = subscribers
         self.description = description
 
+
 class DirectoryTag(object):
     def __init__(self, tag, weight):
         self.tag = tag
@@ -91,6 +92,7 @@ class Provider(object):
 def directory_entry_from_opml(url):
     return [DirectoryEntry(d['title'], d['url'], description=d['description']) for d in opml.Importer(url).items]
 
-def directory_entry_from_mygpo_json(url):
-    return [DirectoryEntry(d['title'], d['url'], d['logo_url'], d['subscribers'], d['description']) for d in util.read_json(url)]
 
+def directory_entry_from_mygpo_json(url):
+    return [DirectoryEntry(d['title'], d['url'], d['logo_url'], d['subscribers'], d['description'])
+            for d in util.read_json(url)]

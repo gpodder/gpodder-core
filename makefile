@@ -18,7 +18,6 @@
 ##########################################################################
 
 PYTHON ?= python3
-PEP8 ?= pep8
 
 ##########################################################################
 
@@ -43,17 +42,14 @@ help:
 
 ##########################################################################
 
-NOSETEST_OPTIONS += --verbose --all-modules --with-doctest
-NOSETEST_OPTIONS += --with-coverage --cover-erase --cover-package=gpodder
-
 test:
-	LC_ALL=C $(PYTHON) -m nose $(NOSETEST_OPTIONS)
+	LC_ALL=C $(PYTHON) -m nose
 
 releasetest: test $(POFILES)
 	for lang in $(POFILES); do $(MSGFMT) --check $$lang; done
 
 pep8:
-	$(PEP8) --max-line-length=100 src
+	$(PYTHON) -m pep8
 
 ##########################################################################
 

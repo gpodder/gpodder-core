@@ -227,5 +227,7 @@ class SoundcloudSearchProvider(directory.Provider):
         self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
-        json_url = 'http://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query), CONSUMER_KEY)
-        return [directory.DirectoryEntry(entry['username'], entry['permalink_url']) for entry in util.read_json(json_url)]
+        json_url = 'http://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query),
+                                                                                  CONSUMER_KEY)
+        return [directory.DirectoryEntry(entry['username'], entry['permalink_url'])
+                for entry in util.read_json(json_url)]

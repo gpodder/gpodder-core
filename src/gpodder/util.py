@@ -174,7 +174,7 @@ def normalize_feed_url(url):
         return None
 
     # Assume HTTP for URLs without scheme
-    if not '://' in url:
+    if '://' not in url:
         url = 'http://' + url
 
     scheme, netloc, path, query, fragment = urllib.parse.urlsplit(url)
@@ -836,6 +836,7 @@ def find_command(command):
             return command_file
 
     return None
+
 
 def read_json(url):
     return json.loads(urlopen(url).read().decode('utf-8'))

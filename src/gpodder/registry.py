@@ -58,7 +58,7 @@ class Resolver(object):
 
     def _info(self, resolver):
         return '%s from %s' % (resolver.__name__ if hasattr(resolver, '__name__')
-                else resolver.__class__.__name__, resolver.__module__)
+                               else resolver.__class__.__name__, resolver.__module__)
 
     def _dump(self, indent=''):
         print('== {} ({}) =='.format(self._name, self._description))
