@@ -376,8 +376,11 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
 
             # If the basename is empty, use the md5 hexdigest of the URL
             if not fn_template or fn_template.startswith('redirect.'):
-                logger.error('Report this feed: Podcast %s, episode %s', self.podcast.url, self.url)
-                fn_template = hashlib.md5(self.url).hexdigest()
+                # Try to fallback to using util.filename_from_url() for getting a good file basename
+                fn_template = util.sanitize_filename(util.filename_from_url(self.url)[0], self.MAX_FOLDERNAME_LENGTH)
+                if not fn_template:
+                    logger.error('Report this feed: Podcast %s, episode %s', self.podcast.url, self.url)
+                    fn_template = hashlib.md5(self.url.encode('utf-8')).hexdigest()
 
             # Find a unique filename for this episode
             wanted_filename = self.find_unique_file_name(fn_template, ext)

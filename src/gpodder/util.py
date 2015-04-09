@@ -498,9 +498,14 @@ def filename_from_url(url):
     into the query string to find better matches, if the
     original extension does not resolve to a known type.
 
-    http://my.net/redirect.php?my.net/file.ogg => ("file", ".ogg")
-    http://server/get.jsp?file=/episode0815.MOV => ("episode0815", ".mov")
-    http://s/redirect.mp4?http://serv2/test.mp4 => ("test", ".mp4")
+    >>> filename_from_url('http://my.net/redirect.php?my.net/file.ogg')
+    ('file', '.ogg')
+    >>> filename_from_url('http://server/get.jsp?file=/episode0815.MOV')
+    ('episode0815', '.mov')
+    >>> filename_from_url('http://s/redirect.mp4?http://serv2/test.mp4')
+    ('test', '.mp4')
+    >>> filename_from_url('http://example.com/?download_media_file=25&ptm_context=x-mp3&ptm_file=DTM006_Zeppelin.mp3')
+    ('DTM006_Zeppelin', '.mp3')
     """
     (scheme, netloc, path, para, query, fragid) = urllib.parse.urlparse(url)
     (filename, extension) = os.path.splitext(os.path.basename(urllib.parse.unquote(path)))
@@ -516,7 +521,16 @@ def filename_from_url(url):
         (query_filename, query_extension) = filename_from_url(query_url)
 
         if file_type_by_extension(query_extension) is not None:
-            return os.path.splitext(os.path.basename(query_url))
+            filename, extension = os.path.splitext(os.path.basename(query_url))
+            return (filename, extension.lower())
+
+    # Nothing found so far - try to see if any of the query parameters look like a filename
+    # extracts the filename from e.g. 'http://example.com?foo=bar.mp3' to ('bar', '.mp3')
+    parsed = urllib.parse.urlparse(url)
+    for k, v in urllib.parse.parse_qsl(parsed.query):
+        value_filename, value_extension = os.path.splitext(os.path.basename(v))
+        if file_type_by_extension(value_extension) is not None:
+            return (value_filename, value_extension.lower())
 
     # No exact match found, simply return the original filename & extension
     return (filename, extension.lower())
