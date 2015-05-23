@@ -127,7 +127,7 @@ class PodcastParserVimeoFeed(podcast.PodcastParserEnclosureFallbackFeed):
 
 
 @registry.feed_handler.register
-def vimeo_feed_handler(channel, max_episodes):
+def vimeo_feed_handler(channel, max_episodes, config):
     url = get_real_channel_url(channel.url)
     if url is None:
         return None

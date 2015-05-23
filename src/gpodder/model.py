@@ -50,9 +50,10 @@ class NoHandlerForURL(Exception):
     pass
 
 
-def fetch_channel(channel, max_episodes):
+def fetch_channel(channel, config):
+    max_episodes = config.limit.episodes
     for resolver in (registry.feed_handler, registry.fallback_feed_handler):
-        feed = resolver.resolve(channel, None, max_episodes)
+        feed = resolver.resolve(channel, None, max_episodes, config)
         if feed is not None:
             return feed
 
@@ -735,9 +736,8 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
         self._updating = True
         try:
-            max_episodes = self.model.core.config.limit.episodes
             old_url = self.url
-            result = fetch_channel(self, max_episodes)
+            result = fetch_channel(self, self.model.core.config)
             if self.url != old_url:
                 logger.info('URL updated: {} -> {}'.format(old_url, self.url))
             self._consume_custom_feed(result)

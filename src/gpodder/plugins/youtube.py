@@ -32,16 +32,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 import re
+import json
 import urllib.request
 import urllib.parse
 import urllib.error
 
-try:
-    # Python >= 2.6
-    from urllib.parse import parse_qs
-except ImportError:
-    # Python < 2.6
-    from cgi import parse_qs
 
 # http://en.wikipedia.org/wiki/YouTube#Quality_and_codecs
 # format id, (preferred ids, path(?), description) # video bitrate, audio bitrate
@@ -79,6 +74,9 @@ formats = [
     (5, ([5],            '5/320x240/7/0/0',      'FLV 240p (320x240)')),  # 0.25 Mbps,  64 kbps
 ]
 formats_dict = dict(formats)
+
+V3_API_ENDPOINT = 'https://www.googleapis.com/youtube/v3'
+CHANNEL_VIDEOS_XML = 'https://www.youtube.com/feeds/videos.xml'
 
 
 class YouTubeError(Exception):
@@ -126,10 +124,10 @@ def youtube_resolve_download_url(episode, config):
         if r4 is not None:
             fmt_url_map = urllib.parse.unquote(r4.group(1))
             for fmt_url_encoded in fmt_url_map.split(','):
-                video_info = parse_qs(fmt_url_encoded)
+                video_info = urllib.parse.parse_qs(fmt_url_encoded)
                 yield (int(video_info['itag'][0]), video_info['url'][0])
         else:
-            error_info = parse_qs(page)
+            error_info = urllib.parse.parse_qs(page)
             error_message = util.remove_html_tags(error_info['reason'][0])
             raise YouTubeError('Cannot download video: %s' % error_message)
 
@@ -182,25 +180,50 @@ def is_youtube_guid(guid):
     return guid.startswith('tag:youtube.com,2008:video:')
 
 
-def get_real_channel_url(url):
-    if url.startswith('http://www.youtube.com/rss/user/'):
-        return url
+def for_each_feed_pattern(func, url, fallback_result):
+    """
+    Try to find the username for all possible YouTube feed/webpage URLs
+    Will call func(url, channel) for each match, and if func() returns
+    a result other than None, returns this. If no match is found or
+    func() returns None, return fallback_result.
+    """
+    CHANNEL_MATCH_PATTERNS = [
+        'http[s]?://(?:[a-z]+\.)?youtube\.com/user/([a-z0-9]+)',
+        'http[s]?://(?:[a-z]+\.)?youtube\.com/profile?user=([a-z0-9]+)',
+        'http[s]?://(?:[a-z]+\.)?youtube\.com/channel/([_a-z0-9]+)',
+        'http[s]?://(?:[a-z]+\.)?youtube\.com/rss/user/([a-z0-9]+)/videos\.rss',
+        'http[s]?://gdata.youtube.com/feeds/users/([^/]+)/uploads',
+        'http[s]?://(?:[a-z]+\.)?youtube\.com/feeds/videos.xml?channel_id=([a-z0-9]+)',
+    ]
 
-    r = re.compile('http://(?:[a-z]+\.)?youtube\.com/user/([a-z0-9]+)', re.IGNORECASE)
-    m = r.match(url)
+    for pattern in CHANNEL_MATCH_PATTERNS:
+        m = re.match(pattern, url, re.IGNORECASE)
+        if m is not None:
+            result = func(url, m.group(1))
+            if result is not None:
+                return result
 
-    if m is not None:
-        next = 'http://www.youtube.com/rss/user/' + m.group(1) + '/videos.rss'
-        return next
+    return fallback_result
 
-    r = re.compile('http://(?:[a-z]+\.)?youtube\.com/profile?user=([a-z0-9]+)', re.IGNORECASE)
-    m = r.match(url)
 
-    if m is not None:
-        next = 'http://www.youtube.com/rss/user/' + m.group(1) + '/videos.rss'
-        return next
+def get_channels_for_user(username, api_key_v3):
+    stream = util.urlopen('{0}/channels?forUsername={1}&part=id&key={2}'.format(V3_API_ENDPOINT, username, api_key_v3))
+    data = json.loads(stream.read().decode('utf-8'))
+    return ['{0}?channel_id={1}'.format(CHANNEL_VIDEOS_XML, item['id']) for item in data['items']]
 
-    return None
+
+def get_real_channel_url(url, api_key_v3):
+    # Check if it's a YouTube feed, and if we have an API key, auto-resolve the channel
+    if url and api_key_v3:
+        _, user = for_each_feed_pattern(lambda url, channel: (url, channel), url, (None, None))
+        if user is not None:
+            logger.info('Getting channels for YouTube user %s', user)
+            new_urls = get_channels_for_user(user, api_key_v3)
+            logger.debug('YouTube channels retrieved: %r', new_urls)
+            if len(new_urls) == 1:
+                return new_urls[0]
+
+    return url
 
 
 @registry.cover_art.register
@@ -229,8 +252,8 @@ class PodcastParserYouTubeFeed(podcast.PodcastParserEnclosureFallbackFeed):
 
 
 @registry.feed_handler.register
-def youtube_feed_handler(channel, max_episodes):
-    url = get_real_channel_url(channel.url)
+def youtube_feed_handler(channel, max_episodes, config):
+    url = get_real_channel_url(channel.url, config.plugins.youtube.api_key_v3)
     if url is None:
         return None
 

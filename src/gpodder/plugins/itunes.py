@@ -38,7 +38,7 @@ class ITunesFeedException(BaseException):
 
 
 @registry.feed_handler.register
-def itunes_feed_handler(channel, max_episodes):
+def itunes_feed_handler(channel, max_episodes, config):
     m = re.match(r'https?://itunes.apple.com/(?:[^/]*/)?podcast/.+$', channel.url, re.I)
     if m is None:
         return None

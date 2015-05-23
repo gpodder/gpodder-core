@@ -191,7 +191,7 @@ class PodcastParserLinkFallbackFeed(PodcastParserEnclosureFallbackFeed):
 
 
 @registry.fallback_feed_handler.register
-def podcast_parser_handler(channel, max_episodes):
+def podcast_parser_handler(channel, max_episodes, config):
     return PodcastParserLinkFallbackFeed(channel, max_episodes)
 
 
