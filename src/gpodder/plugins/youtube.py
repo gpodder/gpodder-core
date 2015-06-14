@@ -223,7 +223,7 @@ def get_real_channel_url(url, api_key_v3):
             if len(new_urls) == 1:
                 return new_urls[0]
 
-    return url
+    return None
 
 
 @registry.cover_art.register
