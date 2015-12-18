@@ -784,7 +784,7 @@ class gPodderCli(object):
             return False
 
         out('[%04x]' % episode.id, inblue(episode.title))
-        out('from', ingreen(episode.parent.title))
+        out('from', ingreen(episode.podcast.title))
         out('Size:', self._format_filesize(episode.file_size))
         out('='*len(episode.title))
         out(episode.description)
