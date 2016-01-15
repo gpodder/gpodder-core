@@ -4,7 +4,7 @@
 
 """
 gPodder: Media and podcast aggregator
-Copyright (c) 2005-2015 Thomas Perl and the gPodder Team
+Copyright (c) 2005-2016 Thomas Perl and the gPodder Team
 
 Historically, gPodder was licensed under the terms of the "GNU GPLv2 or
 later", and has been upgraded to "GNU GPLv3 or later" in August 2007.
@@ -53,7 +53,7 @@ __author__ = 'Thomas Perl <thp@gpodder.org>'
 __version__ = '4.6.0'
 __date__ = '2015-05-24'
 __relname__ = 'Industrial'
-__copyright__ = '© 2005-2015 Thomas Perl and the gPodder Team'
+__copyright__ = '© 2005-2016 Thomas Perl and the gPodder Team'
 __license__ = 'ISC / GPLv3 or later'
 __url__ = 'http://gpodder.org/'
 
