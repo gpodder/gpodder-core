@@ -33,7 +33,6 @@ VIMEOCHANNEL_RE = re.compile(r'http[s]?://vimeo\.com/(channels/[^/]+|\d+)$', re.
 MOOGALOOP_RE = re.compile(r'http[s]?://vimeo\.com/moogaloop\.swf\?clip_id=(\d+)$', re.IGNORECASE)
 VIMEO_VIDEO_RE = re.compile(r'http[s]?://vimeo.com/channels/(?:[^/])+/(\d+)$', re.IGNORECASE)
 SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
-DATA_CONFIG_RE = re.compile(r'data-config-url="([^"]+)"')
 
 # List of qualities, from lowest to highest
 FILEFORMAT_RANKING = ['mobile', 'sd', 'hd']
@@ -52,26 +51,16 @@ def vimeo_resolve_download_url(episode, config):
     if video_id is None:
         return None
 
-    web_url = 'http://vimeo.com/%s' % video_id
-    web_data = util.urlopen(web_url).read().decode('utf-8')
-    data_config_frag = DATA_CONFIG_RE.search(web_data)
-
-    if data_config_frag is None:
-        raise VimeoError('Cannot get data config from Vimeo')
-
-    data_config_url = data_config_frag.group(1).replace('&amp;', '&')
+    data_config_url = 'https://player.vimeo.com/video/%s/config' % (video_id,)
 
     def get_urls(data_config_url):
         data_config = util.read_json(data_config_url)
         for fileinfo in data_config['request']['files'].values():
-            if not isinstance(fileinfo, dict):
+            if not isinstance(fileinfo, list):
                 continue
 
-            for fileformat, keys in fileinfo.items():
-                if not isinstance(keys, dict):
-                    continue
-
-                yield (fileformat, keys['url'])
+            for item in fileinfo:
+                yield (item['quality'], item['url'])
 
     fileformat_to_url = dict(get_urls(data_config_url))
 
