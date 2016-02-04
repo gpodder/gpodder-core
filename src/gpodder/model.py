@@ -497,6 +497,17 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
                                     reverse=True)
             self._determine_common_prefix()
 
+    def one_line_description(self):
+        MAX_LINE_LENGTH = 120
+        desc = self.description or ''
+        desc = re.sub('\s+', ' ', desc).strip()
+        if not desc:
+            return '-'
+        elif len(desc) > MAX_LINE_LENGTH:
+            return desc[:MAX_LINE_LENGTH] + '...'
+        else:
+            return desc
+
     @property
     def model(self):
         return self._parent
