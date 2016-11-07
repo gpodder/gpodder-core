@@ -106,6 +106,10 @@ class Core(object):
             PLUGINS = DEFAULT_PLUGINS
         else:
             PLUGINS = PLUGINS.split()
+        ADD_PLUGINS = os.environ.get('GPODDER_ADD_PLUGINS', None)
+        if ADD_PLUGINS is not None:
+            PLUGINS += ADD_PLUGINS.split()
+
         for plugin in PLUGINS:
             try:
                 __import__(plugin)

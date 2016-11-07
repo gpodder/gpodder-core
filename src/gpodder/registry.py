@@ -42,6 +42,9 @@ class Resolver(object):
             if result is not None:
                 yield result
 
+    def call_each(self, *args):
+        list(self.each(*args))
+
     def select(self, selector=None):
         for resolver in self._resolvers:
             if selector is None or selector(resolver):
@@ -73,6 +76,7 @@ RESOLVER_NAMES = {'cover_art': 'Resolve the real cover art URL of an episode',
                   'feed_handler': 'Handle parsing of a feed',
                   'fallback_feed_handler': 'Handle parsing of a feed (catch-all)',
                   'url_shortcut': 'Expand shortcuts when adding a new URL',
+                  'after_download': 'Function to call with episodes after download finishes',
                   'directory': 'Podcast directory and search provider'}
 
 LOCALS = locals()
