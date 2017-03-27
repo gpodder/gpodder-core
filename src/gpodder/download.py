@@ -42,6 +42,7 @@ import shutil
 import os.path
 import os
 import time
+import datetime
 import collections
 
 import mimetypes
@@ -809,10 +810,12 @@ class DownloadTask(object):
             self.filename = self.__episode.local_filename(create=False)
             self.tempname = os.path.join(os.path.dirname(self.filename),
                                          os.path.basename(self.tempname))
-            shutil.move(self.tempname, self.filename)
+            head, tail = os.path.split(self.filename)    
+            newfilename = os.path.join(head, datetime.datetime.fromtimestamp(self.__episode.published).strftime("%Y%m%d_") + tail)
+            shutil.move(self.tempname, newfilename)
 
             # Model- and database-related updates after a download has finished
-            self.__episode.on_downloaded(self.filename)
+            self.__episode.on_downloaded(newfilename)
         except DownloadCancelledException:
             logger.info('Download has been cancelled/paused: %s', self)
             if self.status == DownloadTask.CANCELLED:
