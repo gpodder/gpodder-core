@@ -108,7 +108,7 @@ def youtube_resolve_download_url(episode, config):
         return None
 
     page = None
-    url = 'http://www.youtube.com/get_video_info?&el=detailpage&video_id=' + vid
+    url = 'https://www.youtube.com/get_video_info?&el=detailpage&video_id=' + vid
 
     while page is None:
         req = util.http_request(url, method='GET')
