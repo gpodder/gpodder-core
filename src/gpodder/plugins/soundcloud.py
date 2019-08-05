@@ -1,6 +1,6 @@
 #
-# gPodder: Media and podcast aggregator
-# Copyright (c) 2005-2015 Thomas Perl and the gPodder Team
+# gPodder - A media aggregator and podcast client
+# Copyright (c) 2005-2018 The gPodder Team
 #
 # gPodder is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,19 +19,21 @@
 # Soundcloud.com API client module for gPodder
 # Thomas Perl <thp@gpodder.org>; 2009-11-03
 
-import gpodder
-
-from gpodder import registry
-from gpodder import util
-from gpodder import directory
-
-import os
-import time
-
-import re
 import email
+import json
+import logging
+logger = logging.getLogger(__name__)
+import os
+import re
+import time
+import urllib.error
 import urllib.parse
+import urllib.request
 
+import gpodder
+from gpodder import model, util, registry, directory
+
+# _ = qsTr
 
 # gPodder's consumer key for the Soundcloud API
 CONSUMER_KEY = 'zrweghtEtnZLpXf3mlm8mQ'
@@ -44,7 +46,7 @@ def soundcloud_parsedate(s):
     parsed with this function (2009/11/03 13:37:00).
     """
     m = re.match(r'(\d{4})/(\d{2})/(\d{2}) (\d{2}):(\d{2}):(\d{2})', s)
-    return time.mktime(tuple([int(x) for x in m.groups()]+[0, 0, -1]))
+    return time.mktime(tuple([int(x) for x in m.groups()] + [0, 0, -1]))
 
 
 def get_param(s, param='filename', header='content-disposition'):
@@ -90,15 +92,27 @@ class SoundcloudUser(object):
     def __init__(self, username):
         self.username = username
 
-    def get_coverart(self):
+    def get_user_info(self):
         global CONSUMER_KEY
+        key = ':'.join((self.username, 'user_info'))
 
-        json_url = 'http://api.soundcloud.com/users/%s.json?consumer_key=%s' %\
-                   (self.username, CONSUMER_KEY)
-        user_info = util.read_json(json_url)
-        image = user_info.get('avatar_url', None)
+        json_url = 'https://api.soundcloud.com/users/%s.json?consumer_key=%s' % (self.username, CONSUMER_KEY)
+        logger.debug('get_user_info url: %s', json_url)
+        user_info = json.loads(util.urlopen(json_url).read().decode('utf-8'))
 
-        return image
+        return user_info
+
+    def get_coverart(self):
+        user_info = self.get_user_info()
+        return user_info.get('avatar_url', None)
+
+    def get_user_id(self):
+        user_info = self.get_user_info()
+        return user_info.get('id', None)
+
+    def get_username(self):
+        user_info = self.get_user_info()
+        return user_info.get('username', None)
 
     def get_tracks(self, feed):
         """Get a generator of tracks from a SC user
@@ -107,21 +121,33 @@ class SoundcloudUser(object):
         track it can find for its user."""
         global CONSUMER_KEY
 
-        json_url = 'http://api.soundcloud.com/users/%(user)s/%(feed)s.json?' \
-                   'filter=downloadable&consumer_key=%(consumer_key)s' \
-                   % {"user": self.username, "feed": feed, "consumer_key": CONSUMER_KEY}
-        tracks = (track for track in util.read_json(json_url) if track['downloadable'])
+        json_url = ('https://api.soundcloud.com/users/%(user)s/%(feed)s.'
+                    'json?filter=downloadable&consumer_key=%'
+                    '(consumer_key)s&limit=200'
+                    % {"user": self.get_user_id(),
+                       "feed": feed,
+                       "consumer_key": CONSUMER_KEY})
+
+        logger.debug('get_tracks url: %s', json_url)
+
+        json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
+        tracks = [track for track in json_tracks if track['downloadable']]
+        total_count = len(tracks) + len([track for track in json_tracks
+                                                            if not track['downloadable']])
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
             url = track.get('stream_url', track['download_url']) + \
-                '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+                  '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+
+            logger.debug('track in tracks url: %s', url)
+
             filesize, filetype, filename = get_metadata(url)
 
             yield {
-                'title': track.get('title', track.get('permalink')) or 'Unknown track',
-                'link': track.get('permalink_url') or 'http://soundcloud.com/'+self.username,
-                'description': track.get('description') or 'No description available',
+                'title': track.get('title', track.get('permalink')) or ('Unknown track'),
+                'link': track.get('permalink_url') or 'https://soundcloud.com/' + self.username,
+                'description': track.get('description') or ('No description available'),
                 'url': url,
                 'file_size': int(filesize),
                 'mime_type': filetype,
@@ -145,7 +171,7 @@ class SoundcloudFeed(object):
         return default
 
     def get_title(self):
-        return '%s on Soundcloud' % self.username
+        return '%s on Soundcloud' % self.sc_user.get_username()
 
     def get_image(self):
         return self.sc_user.get_coverart()
