@@ -131,9 +131,7 @@ class SoundcloudUser(object):
         logger.debug('get_tracks url: %s', json_url)
 
         json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
-        tracks = [track for track in json_tracks if track['downloadable']]
-        total_count = len(tracks) + len([track for track in json_tracks
-                                                            if not track['downloadable']])
+        tracks = [track for track in json_tracks]
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
