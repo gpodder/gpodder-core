@@ -122,7 +122,7 @@ class SoundcloudUser(object):
         global CONSUMER_KEY
 
         json_url = ('https://api.soundcloud.com/users/%(user)s/%(feed)s.'
-                    'json?filter=downloadable&consumer_key=%'
+                    'json?consumer_key=%'
                     '(consumer_key)s&limit=200'
                     % {"user": self.get_user_id(),
                        "feed": feed,
@@ -131,12 +131,16 @@ class SoundcloudUser(object):
         logger.debug('get_tracks url: %s', json_url)
 
         json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
-        tracks = [track for track in json_tracks]
+        tracks = [track for track in json_tracks if track['streamable'] or track['downloadable']]
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
-            url = track.get('stream_url', track['download_url']) + \
-                  '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+            base_url = track.get('stream_url') if track['streamable'] else track.get('download_url')
+            if base_url != None:
+                url = base_url + '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+            else:
+                logger.debug('Skipping track with no base_url')
+                continue
 
             logger.debug('track in tracks url: %s', url)
 
