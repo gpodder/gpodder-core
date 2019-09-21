@@ -136,7 +136,11 @@ class SoundcloudUser(object):
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
             base_url = track.get('stream_url') if track['streamable'] else track.get('download_url')
-            url = base_url + '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+            if base_url != None:
+                url = base_url + '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
+            else:
+                logger.debug('Skipping track with no base_url')
+                continue
 
             logger.debug('track in tracks url: %s', url)
 
