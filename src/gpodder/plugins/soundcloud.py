@@ -91,14 +91,19 @@ def get_metadata(url):
 class SoundcloudUser(object):
     def __init__(self, username):
         self.username = username
+        self.cache = {}
 
     def get_user_info(self):
         global CONSUMER_KEY
         key = ':'.join((self.username, 'user_info'))
 
+        if key in self.cache:
+            return self.cache[key]
+
         json_url = 'https://api.soundcloud.com/users/%s.json?consumer_key=%s' % (self.username, CONSUMER_KEY)
         logger.debug('get_user_info url: %s', json_url)
         user_info = json.loads(util.urlopen(json_url).read().decode('utf-8'))
+        self.cache[key] = user_info
 
         return user_info
 
