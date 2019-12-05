@@ -1,6 +1,6 @@
 #
 # gPodder - A media aggregator and podcast client
-# Copyright (c) 2005-2018 The gPodder Team
+# Copyright (c) 2005-2019 The gPodder Team
 #
 # gPodder is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import urllib.parse
 import urllib.request
 
 import gpodder
-from gpodder import model, util, registry, directory
+from gpodder import model, util, registry, directory, core
 
 # _ = qsTr
 
@@ -119,7 +119,7 @@ class SoundcloudUser(object):
         user_info = self.get_user_info()
         return user_info.get('username', None)
 
-    def get_tracks(self, feed):
+    def get_tracks(self, feed, channel):
         """Get a generator of tracks from a SC user
 
         The generator will give you a dictionary for every
@@ -138,6 +138,8 @@ class SoundcloudUser(object):
         json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
         tracks = [track for track in json_tracks if track['streamable'] or track['downloadable']]
 
+        existing_guids = {episode.guid: {"filesize": episode.file_size, "filetype": episode.mime_type} for episode in channel.episodes}
+
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
             base_url = track.get('stream_url') if track['streamable'] else track.get('download_url')
@@ -147,9 +149,14 @@ class SoundcloudUser(object):
                 logger.debug('Skipping track with no base_url')
                 continue
 
-            logger.debug('track in tracks url: %s', url)
+            track_guid = track.get('permalink', track.get('id'))
 
-            filesize, filetype, filename = get_metadata(url)
+            if track_guid not in existing_guids:
+                filesize, filetype, filename = get_metadata(url)
+            else:
+                filesize = existing_guids[track_guid]['filesize']
+                filetype = existing_guids[track_guid]['filetype']
+                logger.debug('Skipping existing track - %s', url)
 
             yield {
                 'title': track.get('title', track.get('permalink')) or ('Unknown track'),
@@ -158,7 +165,7 @@ class SoundcloudUser(object):
                 'url': url,
                 'file_size': int(filesize),
                 'mime_type': filetype,
-                'guid': track.get('permalink', track.get('id')),
+                'guid': track_guid,
                 'published': soundcloud_parsedate(track.get('created_at', None)),
             }
 
@@ -196,7 +203,7 @@ class SoundcloudFeed(object):
         return self._get_new_episodes(channel, 'tracks')
 
     def _get_new_episodes(self, channel, track_type):
-        tracks = [t for t in self.sc_user.get_tracks(track_type)]
+        tracks = [t for t in self.sc_user.get_tracks(track_type, channel)]
 
         existing_guids = [episode.guid for episode in channel.episodes]
         seen_guids = [track['guid'] for track in tracks]
