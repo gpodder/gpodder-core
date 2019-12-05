@@ -31,7 +31,7 @@ import urllib.parse
 import urllib.request
 
 import gpodder
-from gpodder import model, util, registry, directory, core
+from gpodder import model, util, registry, directory
 
 # _ = qsTr
 
