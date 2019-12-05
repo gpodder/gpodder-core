@@ -167,6 +167,7 @@ class SoundcloudUser(object):
                 'mime_type': filetype,
                 'guid': track_guid,
                 'published': soundcloud_parsedate(track.get('created_at', None)),
+                'total_time': int(track.get('duration') / 1000)
             }
 
 
