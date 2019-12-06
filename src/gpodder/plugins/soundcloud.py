@@ -123,7 +123,6 @@ class SoundcloudUser(object):
         The generator will give you a dictionary for every
         track it can find for its user."""
         global CONSUMER_KEY
-        read_from_cache = 0
 
         json_url = ('https://api.soundcloud.com/users/%(user)s/%(feed)s.'
                     'json?consumer_key=%'
@@ -137,13 +136,14 @@ class SoundcloudUser(object):
         json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
         tracks = [track for track in json_tracks if track['streamable'] or track['downloadable']]
 
-        existing_guids = { episode.guid:
-                            { "filesize": episode.file_size,
-                              "filetype": episode.mime_type,
-                            } for episode in channel.episodes
-                         }
+        self.cache['episodes'] = { episode.guid:
+                                   { "filesize": episode.file_size,
+                                     "filetype": episode.mime_type,
+                                   } for episode in channel.episodes
+                                 }
 
-        logger.debug('%d Episodes in database for Soundcloud:%s', len(existing_guids), self.username)
+        read_from_cache = 0
+        logger.debug('%d Episodes in database for Soundcloud:%s', len(self.cache['episodes']), self.username)
 
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
@@ -156,11 +156,11 @@ class SoundcloudUser(object):
 
             track_guid = track.get('permalink', track.get('id'))
 
-            if track_guid not in existing_guids:
+            if track_guid not in self.cache['episodes']:
                 filesize, filetype, filename = get_metadata(url)
             else:
-                filesize = existing_guids[track_guid]['filesize']
-                filetype = existing_guids[track_guid]['filetype']
+                filesize = self.cache['episodes'][track_guid]['filesize']
+                filetype = self.cache['episodes'][track_guid]['filetype']
                 read_from_cache += 1
 
             yield {
@@ -175,7 +175,7 @@ class SoundcloudUser(object):
                 'total_time': int(track.get('duration') / 1000),
             }
 
-        logger.debug('Read %d episodes from %d cached episodes', read_from_cache, len(existing_guids))
+        logger.debug('Read %d episodes from %d cached episodes', read_from_cache, len(self.cache['episodes']))
 
 
 class SoundcloudFeed(object):
