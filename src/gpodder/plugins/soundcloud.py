@@ -97,15 +97,13 @@ class SoundcloudUser(object):
         global CONSUMER_KEY
         key = ':'.join((self.username, 'user_info'))
 
-        if key in self.cache:
-            return self.cache[key]
+        if key not in self.cache:
+            json_url = 'https://api.soundcloud.com/users/%s.json?consumer_key=%s' % (self.username, CONSUMER_KEY)
+            logger.debug('get_user_info url: %s', json_url)
+            user_info = json.loads(util.urlopen(json_url).read().decode('utf-8'))
+            self.cache[key] = user_info
 
-        json_url = 'https://api.soundcloud.com/users/%s.json?consumer_key=%s' % (self.username, CONSUMER_KEY)
-        logger.debug('get_user_info url: %s', json_url)
-        user_info = json.loads(util.urlopen(json_url).read().decode('utf-8'))
-        self.cache[key] = user_info
-
-        return user_info
+        return self.cache[key]
 
     def get_coverart(self):
         user_info = self.get_user_info()
@@ -167,7 +165,7 @@ class SoundcloudUser(object):
                 'mime_type': filetype,
                 'guid': track_guid,
                 'published': soundcloud_parsedate(track.get('created_at', None)),
-                'total_time': int(track.get('duration') / 1000)
+                'total_time': int(track.get('duration') / 1000),
             }
 
 
