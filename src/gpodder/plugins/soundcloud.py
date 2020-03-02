@@ -126,7 +126,7 @@ class SoundcloudUser(object):
 
         json_url = ('https://api.soundcloud.com/users/%(user)s/%(feed)s.'
                     'json?consumer_key=%'
-                    '(consumer_key)s&limit=200'
+                    '(consumer_key)s&limit=200&linked_partitioning=1'
                     % {"user": self.get_user_id(),
                        "feed": feed,
                        "consumer_key": CONSUMER_KEY})
@@ -134,7 +134,18 @@ class SoundcloudUser(object):
         logger.debug('get_tracks url: %s', json_url)
 
         json_tracks = json.loads(util.urlopen(json_url).read().decode('utf-8'))
-        tracks = [track for track in json_tracks if track['streamable'] or track['downloadable']]
+        tracks = [track for track in json_tracks['collection'] if track['streamable'] or track['downloadable']]
+
+        try:
+            while(json_tracks['next_href'] != ''):
+                next_url = json_tracks['next_href']
+                logger.debug('get page: %s', next_url)
+                json_tracks = json.loads(util.urlopen(next_url).read().decode('utf-8'))
+                tracks += [track for track in json_tracks['collection'] if track['streamable'] or track['downloadable']]
+        except:
+            logger.debug('No pagination/end of pagination for this feed.')
+
+        logger.debug('Starting to add %d tracks, this may take a while.', len(tracks))
 
         self.cache['episodes'] = { episode.guid:
                                    { "filesize": episode.file_size,
