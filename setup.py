@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #
 # setup.py: gPodder Setup Script
-# Copyright (c) 2005-2019, Thomas Perl <m@thp.io>
+# Copyright (c) 2005-2020, Thomas Perl <m@thp.io>
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
