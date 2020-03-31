@@ -753,6 +753,10 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         # Add new episodes to episodes
         self.episodes.extend(new_episodes)
 
+        # Verify that all episode art is up-to-date
+        for episode in self.episodes:
+            self.model.core.cover_downloader.get_cover(self, download=True, episode=episode)
+
         # Sort episodes by pubdate, descending
         self.episodes.sort(key=lambda e: e.published, reverse=True)
 
