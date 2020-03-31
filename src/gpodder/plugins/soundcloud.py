@@ -107,7 +107,12 @@ class SoundcloudUser(object):
 
     def get_coverart(self):
         user_info = self.get_user_info()
-        return user_info.get('avatar_url', None)
+        avatar_url = user_info.get('avatar_url', None)
+        if avatar_url != None:
+            # Soundcloud API by default returns the URL to "large" artwork - 100x100
+            # by replacing "-large" with "-original" in the URL we get unresized files.
+            return avatar_url.replace("-large", "-original")
+        return avatar_url
 
     def get_user_id(self):
         user_info = self.get_user_info()
