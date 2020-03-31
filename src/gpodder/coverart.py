@@ -49,12 +49,13 @@ class CoverDownloader(object):
             # Get episode art.
             filename = episode.art_file
             cover_url = episode.episode_art_url
-            if not cover_url:
-                return None
         else:
             # Get podcast cover.
             filename = podcast.cover_file
             cover_url = podcast.cover_url
+
+        if not cover_url:
+            return None
 
         username = podcast.auth_username
         password = podcast.auth_password
