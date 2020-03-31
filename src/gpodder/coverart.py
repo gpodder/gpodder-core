@@ -61,9 +61,6 @@ class CoverDownloader(object):
         password = podcast.auth_password
 
         # Return already existing files
-        if os.path.exists(filename):
-            return filename
-
         for extension in self.EXTENSIONS:
             if os.path.exists(filename + extension):
                 return filename + extension
