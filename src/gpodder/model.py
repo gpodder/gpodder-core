@@ -569,8 +569,16 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
                 known_files.add(filename)
 
-        known_files.update(os.path.join(self.save_dir, 'folder' + ext)
-                           for ext in coverart.CoverDownloader.EXTENSIONS)
+        if self.cover_file != 'folder':
+            known_files.add(os.path.join(self.save_dir, self.cover_file))
+        else:
+            known_files.update(os.path.join(self.save_dir, 'folder' + ext)
+                               for ext in coverart.CoverDownloader.EXTENSIONS)
+
+        for episode in self.episodes:
+            filename = episode.art_file
+            if filename != None and filename != '':
+                known_files.add(os.path.join(self.save_dir, filename))
 
         existing_files = {filename for filename in
                           glob.glob(os.path.join(self.save_dir, '*'))
