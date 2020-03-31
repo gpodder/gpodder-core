@@ -45,8 +45,6 @@ import string
 
 import minidb
 
-from urllib.parse import urlparse
-
 
 class NoHandlerForURL(Exception):
     pass
