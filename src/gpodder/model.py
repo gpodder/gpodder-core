@@ -769,8 +769,9 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
                 logger.info('URL updated: {} -> {}'.format(old_url, self.url))
             self._consume_custom_feed(result)
 
-            # Download the cover art if it's not yet available
-            self.model.core.cover_downloader.get_cover(self, download=True)
+            # Download the cover art if it's not yet available, don't run if no save_dir was created yet.
+            if self.save_dir != None:
+                self.model.core.cover_downloader.get_cover(self, download=True)
 
             self.save()
 
