@@ -108,7 +108,7 @@ class SoundcloudUser(object):
     def get_coverart(self):
         user_info = self.get_user_info()
         avatar_url = user_info.get('avatar_url', None)
-        if avatar_url != None:
+        if avatar_url:
             # Soundcloud API by default returns the URL to "large" artwork - 100x100
             # by replacing "-large" with "-original" in the URL we get unresized files.
             return avatar_url.replace("-large", "-original")
@@ -164,7 +164,7 @@ class SoundcloudUser(object):
         for track in tracks:
             # Prefer stream URL (MP3), fallback to download URL
             base_url = track.get('stream_url') if track['streamable'] else track.get('download_url')
-            if base_url != None:
+            if base_url:
                 url = base_url + '?consumer_key=%(consumer_key)s' % {'consumer_key': CONSUMER_KEY}
             else:
                 logger.debug('Skipping track with no base_url')
@@ -180,7 +180,7 @@ class SoundcloudUser(object):
                 read_from_cache += 1
 
             artwork_url = track.get('artwork_url')
-            if artwork_url != None and artwork_url != '':
+            if artwork_url:
                 artwork_url = artwork_url.replace("-large", "-original")
 
             yield {

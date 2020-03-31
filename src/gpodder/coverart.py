@@ -45,11 +45,11 @@ class CoverDownloader(object):
         self.core = core
 
     def get_cover(self, podcast, download=False, episode = None):
-        if episode != None:
+        if episode:
             # Get episode art.
             filename = episode.art_file
             cover_url = episode.episode_art_url
-            if cover_url is None:
+            if not cover_url:
                 return None
         else:
             # Get podcast cover.
@@ -91,7 +91,7 @@ class CoverDownloader(object):
                 fname, ext = os.path.splitext(filename)
 
                 # Check if an extension is part of the filename and that it matches the filetype
-                if ext != None and ext != '' :
+                if ext:
                     ext_unchanged = ext
                     # Assume last part of filename parts is extension
                     ext = ext.lower()
@@ -104,13 +104,13 @@ class CoverDownloader(object):
                             filename = fname
                             extension = ext_unchanged
                 # Filename did not include an extension or the extension did not match the filetype
-                if extension is None:
+                if not extension:
                     for filetype, check in list(self.SUPPORTED_EXTENSIONS.items()):
                         if check(data):
                             extension = filetype
                             break
 
-                if extension is None:
+                if not extension:
                     msg = 'Unknown file type: %s (%r)' % (cover_url, data[:6])
                     raise ValueError(msg)
 

@@ -467,12 +467,12 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
 
     @property
     def art_file(self):
-        if self.episode_art_url != None and self.episode_art_url != '':
+        if self.episode_art_url:
             filename = self.guid
             try:
                 url = urlparse(self.episode_art_url)
                 filename = os.path.basename(url.path)
-            except:
+            except Exception:
                 logger.debug('urlparse failed for episode_art_url: %s', self.episode_art_url)
 
             return os.path.join(self.podcast.save_dir, filename)
@@ -577,7 +577,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
         for episode in self.episodes:
             filename = episode.art_file
-            if filename != None and filename != '':
+            if filename:
                 known_files.add(os.path.join(self.save_dir, filename))
 
         existing_files = {filename for filename in
@@ -782,7 +782,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
             self._consume_custom_feed(result)
 
             # Download the cover art if it's not yet available, don't run if no save_dir was created yet.
-            if self.save_dir != None:
+            if self.save_dir:
                 self.model.core.cover_downloader.get_cover(self, download=True)
 
             self.save()
