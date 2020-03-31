@@ -94,7 +94,7 @@ class EpisodeModelFields(minidb.Model):
     chapters = minidb.JSON
     subtitle = str
     description_html = str
-
+    episode_art_url = str
 
 class PodcastModelFields(minidb.Model):
     title = str
