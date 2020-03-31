@@ -936,7 +936,14 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
     @property
     def cover_file(self):
-        return os.path.join(self.save_dir, 'folder')
+        filename = 'folder'
+        try:
+            url = urlparse(self.cover_url)
+            filename = os.path.basename(url.path)
+        except:
+            logger.debug('urlparse failed for cover_url: %s', self.cover_url)
+
+        return os.path.join(self.save_dir, filename)
 
 
 class Model(object):
