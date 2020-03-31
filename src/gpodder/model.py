@@ -151,6 +151,7 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
         current_position = 0
         current_position_updated = 0
         last_playback = 0
+        episode_art_url = ''
 
     def __init__(self, channel):
         self._parent = channel
@@ -468,12 +469,10 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
     @property
     def art_file(self):
         if self.episode_art_url:
-            filename = self.guid
-            try:
-                url = urlparse(self.episode_art_url)
-                filename = os.path.basename(url.path)
-            except Exception:
-                logger.debug('urlparse failed for episode_art_url: %s', self.episode_art_url)
+            filename, extension = util.filename_from_url(self.episode_art_url)
+
+            if not filename:
+                filename = hashlib.sha512(self.episode_art_url.encode('utf-8')).hexdigest()
 
             return os.path.join(self.podcast.save_dir, filename)
         return None
@@ -569,16 +568,14 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
                 known_files.add(filename)
 
-        if self.cover_file != 'folder':
-            known_files.add(os.path.join(self.save_dir, self.cover_file))
-        else:
-            known_files.update(os.path.join(self.save_dir, 'folder' + ext)
-                               for ext in coverart.CoverDownloader.EXTENSIONS)
+        known_files.update(os.path.join(self.cover_file + ext)
+                           for ext in coverart.CoverDownloader.EXTENSIONS)
 
         for episode in self.episodes:
             filename = episode.art_file
             if filename:
-                known_files.add(os.path.join(self.save_dir, filename))
+                known_files.update(os.path.join(episode.art_file + ext)
+                                   for ext in coverart.CoverDownloader.EXTENSIONS)
 
         existing_files = {filename for filename in
                           glob.glob(os.path.join(self.save_dir, '*'))
@@ -949,14 +946,12 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
     @property
     def cover_file(self):
-        filename = 'folder'
-        try:
-            url = urlparse(self.cover_url)
-            filename = os.path.basename(url.path)
-        except:
-            logger.debug('urlparse failed for cover_url: %s', self.cover_url)
-
-        return os.path.join(self.save_dir, filename)
+        if self.cover_url:
+            filename, extension = util.filename_from_url(self.cover_url)
+            if not filename:
+                filename = hashlib.sha512(self.cover_url.encode('utf-8')).hexdigest()
+            return os.path.join(self.save_dir, filename)
+        return None
 
 
 class Model(object):

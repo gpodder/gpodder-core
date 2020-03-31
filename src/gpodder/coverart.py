@@ -88,27 +88,10 @@ class CoverDownloader(object):
             try:
                 extension = None
 
-                fname, ext = os.path.splitext(filename)
-
-                # Check if an extension is part of the filename and that it matches the filetype
-                if ext:
-                    ext_unchanged = ext
-                    # Assume last part of filename parts is extension
-                    ext = ext.lower()
-                    # Deal with alternative extensions for supported format,
-                    # should more cases need to be added a mapping dictionary can be created.
-                    if ext == '.jpeg':
-                        ext = '.jpg'
-                    if ext in self.SUPPORTED_EXTENSIONS:
-                        if self.SUPPORTED_EXTENSIONS[ext](data):
-                            filename = fname
-                            extension = ext_unchanged
-                # Filename did not include an extension or the extension did not match the filetype
-                if not extension:
-                    for filetype, check in list(self.SUPPORTED_EXTENSIONS.items()):
-                        if check(data):
-                            extension = filetype
-                            break
+                for filetype, check in list(self.SUPPORTED_EXTENSIONS.items()):
+                    if check(data):
+                        extension = filetype
+                        break
 
                 if not extension:
                     msg = 'Unknown file type: %s (%r)' % (cover_url, data[:6])
