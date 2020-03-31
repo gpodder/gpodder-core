@@ -179,6 +179,10 @@ class SoundcloudUser(object):
                 filetype = self.cache['episodes'][track_guid]['filetype']
                 read_from_cache += 1
 
+            artwork_url = track.get('artwork_url')
+            if artwork_url != None and artwork_url != '':
+                artwork_url = artwork_url.replace("-large", "-original")
+
             yield {
                 'title': track.get('title', track.get('permalink')) or ('Unknown track'),
                 'link': track.get('permalink_url') or 'https://soundcloud.com/' + self.username,
@@ -189,6 +193,7 @@ class SoundcloudUser(object):
                 'guid': track_guid,
                 'published': soundcloud_parsedate(track.get('created_at', None)),
                 'total_time': int(track.get('duration') / 1000),
+                'episode_art_url' : artwork_url,
             }
 
         logger.debug('Read %d episodes from %d cached episodes', read_from_cache, len(self.cache['episodes']))
