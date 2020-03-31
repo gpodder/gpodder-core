@@ -45,6 +45,8 @@ import string
 
 import minidb
 
+from urllib.parse import urlparse
+
 
 class NoHandlerForURL(Exception):
     pass
@@ -95,6 +97,7 @@ class EpisodeModelFields(minidb.Model):
     subtitle = str
     description_html = str
     episode_art_url = str
+
 
 class PodcastModelFields(minidb.Model):
     title = str
@@ -461,6 +464,19 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
         for k in self.UPDATE_KEYS:
             if k in episode_dict:
                 setattr(self, k, episode_dict[k])
+
+    @property
+    def art_file(self):
+        if self.episode_art_url != None and self.episode_art_url != '':
+            filename = self.guid
+            try:
+                url = urlparse(self.episode_art_url)
+                filename = os.path.basename(url.path)
+            except:
+                logger.debug('urlparse failed for episode_art_url: %s', self.episode_art_url)
+
+            return os.path.join(self.podcast.save_dir, filename)
+        return None
 
 
 class PodcastChannel(PodcastModelFields, PodcastModelMixin):
