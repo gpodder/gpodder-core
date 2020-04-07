@@ -94,6 +94,7 @@ class EpisodeModelFields(minidb.Model):
     chapters = minidb.JSON
     subtitle = str
     description_html = str
+    episode_art_url = str
 
 
 class PodcastModelFields(minidb.Model):
@@ -148,6 +149,7 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
         current_position = 0
         current_position_updated = 0
         last_playback = 0
+        episode_art_url = ''
 
     def __init__(self, channel):
         self._parent = channel
@@ -462,6 +464,17 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
             if k in episode_dict:
                 setattr(self, k, episode_dict[k])
 
+    @property
+    def art_file(self):
+        if self.episode_art_url:
+            filename, extension = util.filename_from_url(self.episode_art_url)
+
+            if not filename:
+                filename = hashlib.sha512(self.episode_art_url.encode('utf-8')).hexdigest()
+
+            return os.path.join(self.podcast.save_dir, filename)
+        return None
+
 
 class PodcastChannel(PodcastModelFields, PodcastModelMixin):
     _common_prefix = str
@@ -553,8 +566,14 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
                 known_files.add(filename)
 
-        known_files.update(os.path.join(self.save_dir, 'folder' + ext)
+        known_files.update(os.path.join(self.cover_file + ext)
                            for ext in coverart.CoverDownloader.EXTENSIONS)
+
+        for episode in self.episodes:
+            filename = episode.art_file
+            if filename:
+                known_files.update(os.path.join(episode.art_file + ext)
+                                   for ext in coverart.CoverDownloader.EXTENSIONS)
 
         existing_files = {filename for filename in
                           glob.glob(os.path.join(self.save_dir, '*'))
@@ -737,6 +756,10 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         # Add new episodes to episodes
         self.episodes.extend(new_episodes)
 
+        # Verify that all episode art is up-to-date
+        for episode in self.episodes:
+            self.model.core.cover_downloader.get_cover(self, download=True, episode=episode)
+
         # Sort episodes by pubdate, descending
         self.episodes.sort(key=lambda e: e.published, reverse=True)
 
@@ -753,8 +776,9 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
                 logger.info('URL updated: {} -> {}'.format(old_url, self.url))
             self._consume_custom_feed(result)
 
-            # Download the cover art if it's not yet available
-            self.model.core.cover_downloader.get_cover(self, download=True)
+            # Download the cover art if it's not yet available, don't run if no save_dir was created yet.
+            if self.save_dir:
+                self.model.core.cover_downloader.get_cover(self, download=True)
 
             self.save()
 
@@ -920,7 +944,12 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
     @property
     def cover_file(self):
-        return os.path.join(self.save_dir, 'folder')
+        if self.cover_url:
+            filename, extension = util.filename_from_url(self.cover_url)
+            if not filename:
+                filename = hashlib.sha512(self.cover_url.encode('utf-8')).hexdigest()
+            return os.path.join(self.save_dir, filename)
+        return None
 
 
 class Model(object):

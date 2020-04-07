@@ -44,9 +44,21 @@ class CoverDownloader(object):
     def __init__(self, core):
         self.core = core
 
-    def get_cover(self, podcast, download=False):
-        filename = podcast.cover_file
-        cover_url = podcast.cover_url
+    def get_cover(self, podcast, download=False, episode=None):
+        if episode:
+            # Get episode art.
+            filename = episode.art_file
+            cover_url = episode.episode_art_url
+        else:
+            # Get podcast cover.
+            filename = podcast.cover_file
+            cover_url = podcast.cover_url
+
+        if not cover_url:
+            return None
+
+        username = podcast.auth_username
+        password = podcast.auth_password
 
         # Return already existing files
         for extension in self.EXTENSIONS:
@@ -62,8 +74,7 @@ class CoverDownloader(object):
 
             # We have to add username/password, because password-protected
             # feeds might keep their cover art also protected (bug 1521)
-            cover_url = util.url_add_authentication(cover_url, podcast.auth_username,
-                                                    podcast.auth_password)
+            cover_url = util.url_add_authentication(cover_url, username, password)
 
             try:
                 logger.info('Downloading cover art: %s', cover_url)
@@ -80,7 +91,7 @@ class CoverDownloader(object):
                         extension = filetype
                         break
 
-                if extension is None:
+                if not extension:
                     msg = 'Unknown file type: %s (%r)' % (cover_url, data[:6])
                     raise ValueError(msg)
 
