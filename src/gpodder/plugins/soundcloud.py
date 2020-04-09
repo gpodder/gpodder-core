@@ -233,16 +233,21 @@ class SoundcloudFeed(object):
 
     def _get_new_episodes(self, channel, track_type):
         tracks = [t for t in self.sc_user.get_tracks(track_type, channel)]
-
-        existing_guids = [episode.guid for episode in channel.episodes]
+        existing_guids = dict((episode.guid, episode) for episode in channel.episodes)
         seen_guids = [track['guid'] for track in tracks]
         new_episodes = []
 
         for track in tracks:
-            if track['guid'] not in existing_guids:
+            episode = existing_guids.get(track['guid'])
+
+            if not episode:
                 episode = channel.episode_factory(track.items())
-                episode.save()
                 new_episodes.append(episode)
+                logger.info('Found new episode: %s', episode.guid)
+            else:
+                episode.update_from_dict(track)
+                logger.info('Updating existing episode: %s', episode.guid)
+            episode.save()
 
         return new_episodes, seen_guids
 

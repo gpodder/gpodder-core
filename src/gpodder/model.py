@@ -129,7 +129,7 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
     MAX_FILENAME_LENGTH = 200
 
     UPDATE_KEYS = ('title', 'url', 'description', 'link', 'published', 'guid', 'file_size',
-                   'payment_url', 'subtitle', 'description_html')
+                   'payment_url', 'subtitle', 'description_html', 'episode_art_url')
 
     class __minidb_defaults__:
         url = ''
