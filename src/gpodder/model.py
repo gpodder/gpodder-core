@@ -483,7 +483,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
     UNICODE_TRANSLATE = {ord('ö'): 'o', ord('ä'): 'a', ord('ü'): 'u'}
 
     # Enumerations for download strategy
-    STRATEGY_DEFAULT, STRATEGY_LATEST = list(range(2))
+    STRATEGY_DEFAULT, STRATEGY_LATEST, STRATEGY_CHRONO = list(range(3))
 
     MAX_FOLDERNAME_LENGTH = 60
     SECONDS_PER_WEEK = 7*24*60*60
@@ -507,7 +507,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         if self.id:
             self._children = sorted(self.db.load_episodes(self, self),
                                     key=lambda e: (e.published, e.id),
-                                    reverse=True)
+                                    reverse=self.download_strategy != PodcastChannel.STRATEGY_CHRONO)
             self._determine_common_prefix()
 
     def one_line_description(self):
@@ -761,8 +761,11 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         for episode in self.episodes:
             self.model.core.cover_downloader.get_cover(self, download=True, episode=episode)
 
-        # Sort episodes by pubdate, descending
-        self.episodes.sort(key=lambda e: e.published, reverse=True)
+        self._order_episodes()
+
+    def _order_episodes(self):
+        # Sort episodes by pubdate, descending if default, ascending if chrono
+        self.episodes.sort(key=lambda e: e.published, reverse=self.download_strategy != PodcastChannel.STRATEGY_CHRONO)
 
     def update(self):
         if self._updating:
@@ -781,6 +784,9 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
             if self.save_dir:
                 self.model.core.cover_downloader.get_cover(self, download=True)
 
+            # Make sure episodes are in correct order
+            self._order_episodes()
+
             self.save()
 
             # Re-determine the common prefix for all episodes
@@ -798,7 +804,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         if self.download_folder is None:
             self.get_save_dir()
 
-        super().save(self.db.db)
+        super().save(self.db.db)       
 
         self.model._append_podcast(self)
 

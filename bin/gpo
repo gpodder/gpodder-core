@@ -43,6 +43,9 @@
     list                       List all subscribed podcasts
     update [URL]               Check for new episodes (all or only at URL)
 
+    episodic URL               Set feed to episodic (newest episodes first)
+    serial URL                 Set feed to serial (oldest episodes first)
+
   - Episode management -
 
     download [URL]             Download new episodes (all or only from URL)
@@ -488,12 +491,14 @@ class gPodderCli(object):
 
             title, url, status = podcast.title, podcast.url, \
                 feed_update_status_msg(podcast)
+            strategy = 'episodic (newest first)' if podcast.download_strategy != podcast.STRATEGY_CHRONO else 'serial (oldest first)'
             episodes = self._episodesList(podcast)
             episodes = '\n      '.join(episodes)
             self._pager("""
     Title: %(title)s
     URL: %(url)s
     Feed update is %(status)s
+    Feed Order: %(strategy)s
 
     Episodes:
       %(episodes)s
@@ -564,10 +569,11 @@ class gPodderCli(object):
         return True
 
     def _format_podcast(self, podcast):
+        strategy = '' if podcast.download_strategy != podcast.STRATEGY_CHRONO else '(serial)'
         if not podcast.pause_subscription:
-            return ' '.join(('#', ingreen(podcast.title)))
+            return ' '.join(('#', ingreen(podcast.title), strategy))
 
-        return ' '.join(('#', inred(podcast.title), '-', _('Subscription suspended')))
+        return ' '.join(('#', inred(podcast.title), strategy, '-', _('Subscription suspended')))
 
     def list(self):
         """List all podcast subscriptions
@@ -931,7 +937,46 @@ class gPodderCli(object):
             if not podcast.pause_subscription:
                 podcast.pause_subscription = True
                 podcast.save()
+                self._model.load_podcast(url)
             self._error(_('Subscription suspended: %(url)s') % {'url': url})
+
+        return True
+
+    @FirstArgumentIsPodcastURL
+    def episodic(self, url):
+        """Define a podcast as episodic (newest episodes first)
+
+        episodic http://example.net/podcast/latest.atom
+
+        Use {serial} to change podcast to oldest episodes first
+        """
+        podcast = self._get_podcast(url)
+
+        if podcast is not None:
+            if podcast.download_strategy != podcast.STRATEGY_DEFAULT:
+                podcast.download_strategy = podcast.STRATEGY_DEFAULT
+                podcast.save()
+                podcast.update()
+            self._error(_('Podcast now set to episodic: %(url)s') % {'url': url})
+
+        return True
+
+    @FirstArgumentIsPodcastURL
+    def serial(self, url):
+        """Define a podcast as serial (oldest episodes first)
+
+        serial http://example.net/podcast/latest.atom
+
+        Use {episodic} to change podcast to newest episodes first
+        """
+        podcast = self._get_podcast(url)
+
+        if podcast is not None:
+            if podcast.download_strategy != podcast.STRATEGY_CHRONO:
+                podcast.download_strategy = podcast.STRATEGY_CHRONO
+                podcast.save()
+                podcast.update()
+            self._error(_('Podcast now set to serial: %(url)s') % {'url': url})
 
         return True
 
