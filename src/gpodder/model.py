@@ -483,7 +483,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
     UNICODE_TRANSLATE = {ord('ö'): 'o', ord('ä'): 'a', ord('ü'): 'u'}
 
     # Enumerations for download strategy
-    STRATEGY_DEFAULT, STRATEGY_LATEST = list(range(2))
+    STRATEGY_DEFAULT, STRATEGY_LATEST, STRATEGY_CHRONO = list(range(3))
 
     MAX_FOLDERNAME_LENGTH = 60
     SECONDS_PER_WEEK = 7*24*60*60
@@ -507,7 +507,7 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         if self.id:
             self._children = sorted(self.db.load_episodes(self, self),
                                     key=lambda e: (e.published, e.id),
-                                    reverse=True)
+                                    reverse=self.download_strategy != PodcastChannel.STRATEGY_CHRONO)
             self._determine_common_prefix()
 
     def one_line_description(self):
@@ -691,12 +691,14 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         if not self.title or self.title == self.url:
             self.title = registry.podcast_title.resolve(self, new_title, new_title)
 
-    def _consume_metadata(self, title, link, description, cover_url, payment_url):
+    def _consume_metadata(self, title, link, description, cover_url, payment_url, type):
         self._consume_updated_title(title)
         self.link = link
         self.description = description
         self.cover_url = cover_url
         self.payment_url = payment_url
+        if type == 'serial':
+            self.download_strategy = PodcastChannel.STRATEGY_CHRONO
         self.save()
 
     def _consume_custom_feed(self, custom_feed):
@@ -707,7 +709,8 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
                                custom_feed.get_link(),
                                custom_feed.get_description(),
                                custom_feed.get_image(),
-                               custom_feed.get_payment_url())
+                               custom_feed.get_payment_url(),
+                               custom_feed.get_type())
 
         self.http_etag = custom_feed.get_etag(self.http_etag)
         self.http_last_modified = custom_feed.get_modified(self.http_last_modified)
@@ -761,8 +764,8 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         for episode in self.episodes:
             self.model.core.cover_downloader.get_cover(self, download=True, episode=episode)
 
-        # Sort episodes by pubdate, descending
-        self.episodes.sort(key=lambda e: e.published, reverse=True)
+        # Sort episodes by pubdate, descending if default, ascending if chrono
+        self.episodes.sort(key=lambda e: e.published, reverse=self.download_strategy != PodcastChannel.STRATEGY_CHRONO)
 
     def update(self):
         if self._updating:
