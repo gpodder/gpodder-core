@@ -46,9 +46,13 @@ class CoverDownloader(object):
 
     def get_cover(self, podcast, download=False, episode=None):
         if episode:
-            # Get episode art.
-            filename = episode.art_file
-            cover_url = episode.episode_art_url
+            if podcast.download_episode_art == True:
+                # Get episode art.
+                filename = episode.art_file
+                cover_url = episode.episode_art_url
+            else:
+                cover_url = None
+
         else:
             # Get podcast cover.
             filename = podcast.cover_file
