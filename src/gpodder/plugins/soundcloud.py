@@ -220,7 +220,7 @@ class SoundcloudFeed(object):
         return self.sc_user.get_coverart()
 
     def get_link(self):
-        return 'http://soundcloud.com/%s' % self.username
+        return 'https://soundcloud.com/%s' % self.username
 
     def get_description(self):
         return 'Tracks published by %s on Soundcloud.' % self.username
@@ -260,7 +260,7 @@ class SoundcloudFavFeed(SoundcloudFeed):
         return '%s\'s favorites on Soundcloud' % self.username
 
     def get_link(self):
-        return 'http://soundcloud.com/%s/favorites' % self.username
+        return 'https://soundcloud.com/%s/favorites' % self.username
 
     def get_description(self):
         return 'Tracks favorited by %s on Soundcloud.' % self.username
@@ -271,7 +271,7 @@ class SoundcloudFavFeed(SoundcloudFeed):
 
 @registry.feed_handler.register
 def soundcloud_feed_handler(channel, max_episodes, config):
-    m = re.match(r'http://([a-z]+\.)?soundcloud\.com/([^/]+)$', channel.url, re.I)
+    m = re.match(r'https?://([a-z]+\.)?soundcloud\.com/([^/]+)$', channel.url, re.I)
 
     if m is not None:
         subdomain, username = m.groups()
@@ -280,7 +280,7 @@ def soundcloud_feed_handler(channel, max_episodes, config):
 
 @registry.feed_handler.register
 def soundcloud_fav_feed_handler(channel, max_episodes, config):
-    m = re.match(r'http://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
+    m = re.match(r'https?://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
 
     if m is not None:
         subdomain, username = m.groups()
@@ -289,8 +289,8 @@ def soundcloud_fav_feed_handler(channel, max_episodes, config):
 
 @registry.url_shortcut.register
 def soundcloud_resolve_url_shortcut():
-    return {'sc': 'http://soundcloud.com/%s',
-            'scfav': 'http://soundcloud.com/%s/favorites'}
+    return {'sc': 'https://soundcloud.com/%s',
+            'scfav': 'https://soundcloud.com/%s/favorites'}
 
 
 @registry.directory.register_instance
@@ -301,7 +301,7 @@ class SoundcloudSearchProvider(directory.Provider):
         self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
-        json_url = 'http://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query),
+        json_url = 'https://api.soundcloud.com/users.json?q=%s&consumer_key=%s' % (urllib.parse.quote(query),
                                                                                   CONSUMER_KEY)
         return [directory.DirectoryEntry(entry['username'], entry['permalink_url'])
                 for entry in util.read_json(json_url)]
