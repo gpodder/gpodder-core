@@ -271,7 +271,7 @@ class SoundcloudFavFeed(SoundcloudFeed):
 
 @registry.feed_handler.register
 def soundcloud_feed_handler(channel, max_episodes, config):
-    m = re.match(r'https://([a-z]+\.)?soundcloud\.com/([^/]+)$', channel.url, re.I)
+    m = re.match(r'https?://([a-z]+\.)?soundcloud\.com/([^/]+)$', channel.url, re.I)
 
     if m is not None:
         subdomain, username = m.groups()
@@ -280,7 +280,7 @@ def soundcloud_feed_handler(channel, max_episodes, config):
 
 @registry.feed_handler.register
 def soundcloud_fav_feed_handler(channel, max_episodes, config):
-    m = re.match(r'https://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
+    m = re.match(r'https?://([a-z]+\.)?soundcloud\.com/([^/]+)/favorites', channel.url, re.I)
 
     if m is not None:
         subdomain, username = m.groups()
