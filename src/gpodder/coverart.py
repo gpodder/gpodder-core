@@ -46,12 +46,9 @@ class CoverDownloader(object):
 
     def get_cover(self, podcast, download=False, episode=None):
         if episode:
-            if podcast.download_episode_art == True:
-                # Get episode art.
-                filename = episode.art_file
-                cover_url = episode.episode_art_url
-            else:
-                cover_url = None
+            # Get episode art.
+            filename = episode.art_file
+            cover_url = episode.episode_art_url
 
         else:
             # Get podcast cover.
@@ -67,7 +64,7 @@ class CoverDownloader(object):
         # Return already existing files
         for extension in self.EXTENSIONS:
             if os.path.exists(filename + extension):
-                return filename + extension
+                return 'file://' + filename + extension
 
         # If allowed to download files, do so here
         if download:
@@ -104,8 +101,10 @@ class CoverDownloader(object):
                     with open(temp_filename, 'wb') as fp:
                         fp.write(data)
 
-                return filename + extension
+                return 'file://' + filename + extension
             except Exception as e:
                 logger.warn('Cannot save cover art', exc_info=True)
+        else:
+            return cover_url
 
         return None

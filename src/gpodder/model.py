@@ -271,6 +271,13 @@ class PodcastEpisode(EpisodeModelFields, PodcastModelMixin):
         if filename is not None:
             util.delete_file(filename)
 
+        art_filename = self.art_file
+        if art_filename is not None:
+            for extension in self.podcast.model.core.cover_downloader.EXTENSIONS:
+                if os.path.exists(art_filename + extension):
+                    art_filename = art_filename + extension
+                    util.delete_file(art_filename)
+
         self.state = gpodder.STATE_DELETED
         self.is_new = False
         self.save()
@@ -757,10 +764,6 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
 
         # Add new episodes to episodes
         self.episodes.extend(new_episodes)
-
-        # Verify that all episode art is up-to-date
-        for episode in self.episodes:
-            self.model.core.cover_downloader.get_cover(self, download=True, episode=episode)
 
         # Sort episodes by pubdate, descending
         self.episodes.sort(key=lambda e: e.published, reverse=True)
