@@ -86,6 +86,9 @@ class PodcastParserFeed(object):
     def get_link(self):
         return self.parsed.get('link', '')
 
+    def get_type(self):
+        return self.parsed.get('type', 'episodic')
+
     def get_description(self):
         return self.parsed.get('description', '')
 
