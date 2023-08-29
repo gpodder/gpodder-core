@@ -27,34 +27,34 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-ITUNES_DEFAULT_VERSION = '11.1.5'
-
-ITUNES_FEEDURL_RE = {'10.7': r'feed-url="([^"]+)"',
-                     '11.1.5': r'"feedUrl":\s*"([^"]+)"'}
-
-
 class ITunesFeedException(BaseException):
     pass
 
 
 @registry.feed_handler.register
 def itunes_feed_handler(channel, max_episodes, config):
-    m = re.match(r'https?://(podcasts|itunes).apple.com/(?:[^/]*/)?podcast/.+$', channel.url, re.I)
+    m = re.match(r'https?://(podcasts|itunes).apple.com/(?:[^/]*/)?podcast/.*id(?P<podcast_id>[0-9]+).*$', channel.url, re.I)
     if m is None:
         return None
 
     logger.debug('Detected iTunes feed.')
-    version = ITUNES_DEFAULT_VERSION
-    headers = {'User-agent': 'iTunes/{}'.format(version)}
-    try:
-        data = util.urlopen(channel.url, headers).read().decode('utf-8')
-        m = re.search(ITUNES_FEEDURL_RE[version], data)
-        if m is None:
-            raise ITunesFeedException('Could not resolve real feed URL from iTunes feed.')
 
-        url = m.group(1)
-        logger.info('Resolved iTunes feed URL: {} -> {}'.format(channel.url, url))
-        channel.url = url
+    if m.group('podcast_id').isnumeric == False or int(m.group('podcast_id')) < 0:
+       logger.debug('Invalid podcast_id extracted from provided URL')
+       return None
+
+    itunes_lookup_url = 'https://itunes.apple.com/lookup?entity=podcast&id=' + m.group('podcast_id')
+    try:
+        jsonData = util.read_json(itunes_lookup_url)
+
+        if jsonData['resultCount'] != 1:
+            raise ITunesFeedException('Unsupported number of results: ' + str(jsonData['resultCount']))
+
+        if not util.validate_url(jsonData['results'][0]['feedUrl']):
+            raise ITunesFeedException('Could not resolve real feed URL from iTunes feed.\nDetected URL: ' + jsonData['results'][0]['feedUrl'])
+
+        logger.info('Resolved iTunes feed URL: {} -> {}'.format(channel.url, jsonData['results'][0]['feedUrl']))
+        channel.url = jsonData['results'][0]['feedUrl']
 
         # Delegate further processing of the feed to the normal podcast parser
         # by returning None (will try the next handler in the resolver chain)
