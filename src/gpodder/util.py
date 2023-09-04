@@ -858,10 +858,3 @@ def find_command(command):
 def read_json(url):
     return json.loads(urlopen(url).read().decode('utf-8'))
 
-def validate_url(url):
-    try:
-       parsed_url = urllib.parse.urlparse(url)
-       return all([parsed_url.scheme, parsed_url.netloc])
-    except:
-       logger.debug('validate_url() failed')
-       return False
