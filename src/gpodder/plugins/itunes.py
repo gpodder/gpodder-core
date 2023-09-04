@@ -19,11 +19,11 @@
 
 import gpodder
 
-from gpodder import util
-from gpodder import registry
+from gpodder import util, registry, directory
 
 import re
 import logging
+import urllib.parse
 
 logger = logging.getLogger(__name__)
 
@@ -62,3 +62,15 @@ def itunes_feed_handler(channel, max_episodes, config):
     except Exception as ex:
         logger.warn('Cannot resolve iTunes feed: {}'.format(str(ex)))
         raise
+
+@registry.directory.register_instance
+class ApplePodcastsSearchProvider(directory.Provider):
+    def __init__(self):
+        self.name = 'Apple Podcasts'
+        self.kind = directory.Provider.PROVIDER_SEARCH
+        self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
+
+    def on_search(self, query):
+        json_url = 'https://itunes.apple.com/search?media=podcast&term={}'.format(urllib.parse.quote(query))
+
+        return [directory.DirectoryEntry(entry['collectionName'], entry['feedUrl'], entry['artworkUrl100']) for entry in util.read_json(json_url)['results']]
