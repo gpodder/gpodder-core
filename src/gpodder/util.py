@@ -857,4 +857,3 @@ def find_command(command):
 
 def read_json(url):
     return json.loads(urlopen(url).read().decode('utf-8'))
-

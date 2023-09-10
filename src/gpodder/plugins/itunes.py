@@ -39,16 +39,12 @@ def itunes_feed_handler(channel, max_episodes, config):
 
     logger.debug('Detected iTunes feed.')
 
-    if not m.group('podcast_id').isnumeric or int(m.group('podcast_id')) < 0:
-       logger.debug('Invalid podcast_id extracted from provided URL')
-       return None
-
     itunes_lookup_url = 'https://itunes.apple.com/lookup?entity=podcast&id=' + m.group('podcast_id')
     try:
         json_data = util.read_json(itunes_lookup_url)
 
-        if json_data['resultCount'] != 1:
-            raise ITunesFeedException('Unsupported number of results: ' + str(json_data['resultCount']))
+        if len(json_data['results']) != 1:
+            raise ITunesFeedException('Unsupported number of results: ' + str(len(json_data['results'])))
 
         feed_url = util.normalize_feed_url(json_data['results'][0]['feedUrl'])
 
@@ -61,7 +57,6 @@ def itunes_feed_handler(channel, max_episodes, config):
         # Delegate further processing of the feed to the normal podcast parser
         # by returning None (will try the next handler in the resolver chain)
         return None
-
     except Exception as ex:
         logger.warn('Cannot resolve iTunes feed: {}'.format(str(ex)))
         raise
