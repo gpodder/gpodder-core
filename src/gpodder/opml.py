@@ -141,6 +141,15 @@ class Exporter(object):
         outline.setAttribute('type', self.FEED_TYPE)
         return outline
 
+    def create_section(self, doc, name):
+        """
+        Creates an empty OPML ouline element used to divide sections.
+        """
+        section = doc.createElement('outline')
+        section.setAttribute('title', name)
+        section.setAttribute('text', name)
+        return section
+
     def write(self, channels):
         """
         Creates a XML document containing metadata for each
@@ -165,8 +174,16 @@ class Exporter(object):
         opml.appendChild(head)
 
         body = doc.createElement('body')
+        sections = {}
         for channel in channels:
-            body.appendChild(self.create_outline(doc, channel))
+            if channel.section not in sections.keys():
+                sections[channel.section] = self.create_section(doc, channel.section)
+
+            sections[channel.section].appendChild(self.create_outline(doc, channel))
+
+        for section in sections.values():
+            body.appendChild(section)
+
         opml.appendChild(body)
 
         if self.filename is None:
