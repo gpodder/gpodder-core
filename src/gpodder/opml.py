@@ -70,10 +70,16 @@ class Importer(object):
             else:
                 doc = xml.dom.minidom.parseString(util.urlopen(url).read())
 
+            section = None
             for outline in doc.getElementsByTagName('outline'):
                 # Make sure we are dealing with a valid link type (ignore case)
                 otl_type = outline.getAttribute('type')
                 if otl_type is None or otl_type.lower() not in self.VALID_TYPES:
+                    otl_title = outline.getAttribute('title')
+                    otl_text = outline.getAttribute('text')
+                    #gPodder sections will have name == text, if OPML accepts it type=section
+                    if otl_title is not None and otl_title == otl_text:
+                        section = otl_title
                     continue
 
                 if outline.getAttribute('xmlUrl') or outline.getAttribute('url'):
@@ -86,6 +92,7 @@ class Importer(object):
                                'description': (outline.getAttribute('text') or
                                                outline.getAttribute('xmlUrl') or
                                                outline.getAttribute('url')),
+                               'section': section or 'audio'
                                }
 
                     if channel['description'] == channel['title']:
