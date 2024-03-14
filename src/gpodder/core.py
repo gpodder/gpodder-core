@@ -93,6 +93,7 @@ class Core(object):
             'gpodder.plugins.itunes',
             'gpodder.plugins.youtube',
             'gpodder.plugins.vimeo',
+            'gpodder.plugins.podverse',
 
             # Directory plugins
             'gpodder.plugins.gpoddernet',
