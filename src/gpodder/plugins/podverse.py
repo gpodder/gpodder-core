@@ -37,7 +37,6 @@ class PodverseSearchProvider(directory.Provider):
 
     def on_search(self, query):
         page = 1
-        result_data = []
 
         while True:
             json_url = "https://api.podverse.fm/api/v1/podcast?page={}&searchTitle={}&sort=top-past-week".format(page, urllib.parse.quote(query))
@@ -54,11 +53,10 @@ class PodverseSearchProvider(directory.Provider):
                     image = entry["imageUrl"]
                     description = entry["description"]
 
-                    result_data.append(directory.DirectoryEntry(title, url, image, -1, description))
+                    yield(directory.DirectoryEntry(title, url, image, -1, description))
 
             if entry_count < PAGE_SIZE:
                 break
 
             page += 1
 
-        return result_data
