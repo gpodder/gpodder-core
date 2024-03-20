@@ -4,7 +4,7 @@
 
 """
 gPodder: Media and podcast aggregator
-Copyright (c) 2005-2021 Thomas Perl and the gPodder Team
+Copyright (c) 2005-2024 Thomas Perl and the gPodder Team
 
 Historically, gPodder was licensed under the terms of the "GNU GPLv2 or
 later", and has been upgraded to "GNU GPLv3 or later" in August 2007.
@@ -50,10 +50,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # This metadata block gets parsed by setup.py - use single quotes only
 __tagline__ = 'Media and podcast aggregator'
 __author__ = 'Thomas Perl <thp@gpodder.org>'
-__version__ = '4.14.0'
-__date__ = '2023-10-01'
-__relname__ = 'Nachat'
-__copyright__ = '© 2005-2023 Thomas Perl and the gPodder Team'
+__version__ = '4.15.0'
+__date__ = '2024-03-20'
+__relname__ = 'Gevura'
+__copyright__ = '© 2005-2024 Thomas Perl and the gPodder Team'
 __license__ = 'ISC / GPLv3 or later'
 __url__ = 'http://gpodder.org/'
 
