@@ -96,7 +96,7 @@ class Core(object):
             'gpodder.plugins.podverse',
 
             # Directory plugins
-            'gpodder.plugins.gpoddernet',
+            #'gpodder.plugins.gpoddernet',
 
             # Fallback handlers (catch-all)
             'gpodder.plugins.podcast',
