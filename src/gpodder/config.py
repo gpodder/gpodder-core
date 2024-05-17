@@ -75,6 +75,11 @@ defaults = {
             'episode_list': {
                 'filter_eql': '',
             },
+            'playback_speed': {
+                'stepSize': 0.1,
+                'minimumValue': 0.5,
+                'maximumValue': 3.0,
+            },
         },
     },
 
