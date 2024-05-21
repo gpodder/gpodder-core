@@ -128,9 +128,11 @@ def make_directory(path):
     Tries to create a directory if it does not exist already.
     Returns True if the directory exists after the function
     call, False otherwise.
+    If the directory already exists it returns True if it is
+    writable.
     """
     if os.path.isdir(path):
-        return True
+        return os.access(path, os.W_OK)
 
     try:
         os.makedirs(path)
