@@ -66,14 +66,24 @@ class Core(object):
         # Downloads go to <data_home> or $GPODDER_DOWNLOAD_DIR
         self.downloads = os.environ.get('GPODDER_DOWNLOAD_DIR', os.path.join(self.data_home))
 
+        # Read config and change default directories where needed
+        self.config = config_class(config_file)
+
+        if self.config.fs.downloads != '':
+            self.downloads = self.config.fs.downloads
+
         # Initialize the gPodder home directories
         util.make_directory(self.data_home)
         util.make_directory(self.config_home)
 
+        if self.data_home != self.downloads:
+            if not util.make_directory(self.downloads):
+                self.logger.warn('Custom downloads path [%s] not writable reverting to default', self.downloads)
+                self.downloads = os.environ.get('GPODDER_DOWNLOAD_DIR', os.path.join(self.data_home))
+
         # Open the database and configuration file
         self.db = database_class(database_file, verbose)
         self.model = model_class(self)
-        self.config = config_class(config_file)
 
         # Load installed/configured plugins
         self._load_plugins()

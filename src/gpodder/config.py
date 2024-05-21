@@ -64,6 +64,10 @@ defaults = {
         'retries': 3,  # number of retries when downloads time out
     },
 
+    'fs': {
+        'downloads': ''
+    },
+
     'ui': {
         # Settings for the Command-Line Interface
         'cli': {
