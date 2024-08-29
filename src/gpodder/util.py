@@ -715,7 +715,8 @@ def sanitize_filename(filename, max_length=0, use_ascii=False):
     If use_ascii is True, don't encode in the native language,
     but use only characters from the ASCII character set.
     """
-    assert isinstance(filename, str)
+    if not isinstance(filename, str):
+        rasie Exception('filename is not a string')
 
     if max_length > 0 and len(filename) > max_length:
         logger.info('Limiting file/folder name "%s" to %d characters.', filename, max_length)
