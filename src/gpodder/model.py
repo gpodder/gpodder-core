@@ -49,6 +49,8 @@ import minidb
 class NoHandlerForURL(Exception):
     pass
 
+class DuplicatePodcastException(Exception):
+    pass
 
 def fetch_channel(channel, config):
     max_episodes = config.limit.episodes
@@ -807,7 +809,9 @@ class PodcastChannel(PodcastModelFields, PodcastModelMixin):
         self.model._append_podcast(self)
 
     def get_statistics(self):
-        assert self.id
+        # The following was an assert, it is not clear to me how this can ever happen.
+        if not self.id:
+            raise Exception('get_statistics() - No podcast ID defined.')
 
         total = len(self.episodes)
 
@@ -983,7 +987,9 @@ class Model(object):
         return self.podcasts
 
     def load_podcast(self, url, create=True, authentication_tokens=None):
-        assert all(url != podcast.url for podcast in self.get_podcasts())
+        if not all(url != podcast.url for podcast in self.get_podcasts()):
+            raise DuplicatePodcastException
+
         return self.PodcastClass.load_(self, url, create, authentication_tokens)
 
     def get_prefixes(self):

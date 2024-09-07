@@ -106,9 +106,11 @@ class ContentRange(object):
     """
 
     def __init__(self, start, stop, length):
-        assert start >= 0, "Bad start: %r" % start
-        assert stop is None or (stop >= 0 and stop >= start), (
-            "Bad stop: %r" % stop)
+        if start < 0:
+            raise Exception("Bad start: %r" % start)
+        if not all(stop is None or (stop >= 0 and stop >= start)):
+            raise Exception("Bad stop: %r" % stop)
+
         self.start = start
         self.stop = stop
         self.length = length
@@ -563,7 +565,9 @@ class DownloadTask(object):
             util.delete_file(self.tempname)
 
     def __init__(self, episode):
-        assert episode.download_task is None
+        if episode.download_task is not None:
+            raise Exception('Download already in progress.')
+
         self.__status = DownloadTask.INIT
         self.__status_changed = True
         self.__episode = episode
