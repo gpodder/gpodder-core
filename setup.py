@@ -33,7 +33,7 @@ metadata = dict(re.findall("__([a-z_]+)__\s*=\s*'([^']+)'", main_module))
 author, email = re.match(r'^(.*) <(.*)>$', metadata['author']).groups()
 
 
-class MissingFile(BaseException):
+class MissingFile(Exception):
     pass
 
 

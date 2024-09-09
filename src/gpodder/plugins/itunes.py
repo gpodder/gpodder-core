@@ -27,7 +27,7 @@ import urllib.parse
 
 logger = logging.getLogger(__name__)
 
-class ITunesFeedException(BaseException):
+class ITunesFeedException(Exception):
     pass
 
 
