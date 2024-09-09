@@ -38,7 +38,7 @@ SIGNATURE_RE = re.compile(r'"timestamp":(\d+),"signature":"([^"]+)"')
 FILEFORMAT_RANKING = ['mobile', 'sd', 'hd']
 
 
-class VimeoError(BaseException):
+class VimeoError(Exception):
     pass
 
 
