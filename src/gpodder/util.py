@@ -716,7 +716,7 @@ def sanitize_filename(filename, max_length=0, use_ascii=False):
     but use only characters from the ASCII character set.
     """
     if not isinstance(filename, str):
-        rasie Exception('filename is not a string')
+        raise Exception('filename is not a string')
 
     if max_length > 0 and len(filename) > max_length:
         logger.info('Limiting file/folder name "%s" to %d characters.', filename, max_length)
