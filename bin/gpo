@@ -898,15 +898,24 @@ class gPodderCli(object):
         Use {pending} to see a list of episodes that would be downloaded.
         """
         count = 0
+        max = self._config.get_field('limit.downloads.podcast_max_new')
         for podcast in self._get_podcasts(url):
             podcast_printed = False
+            current = 0
             for episode in podcast.episodes:
+                if episode.state == gpodder.STATE_DOWNLOADED:
+                    current += 1
+                    if current >= max:
+                        break
                 if self._is_episode_new(episode):
                     if not podcast_printed:
                         out(inblue(podcast.title))
                         podcast_printed = True
                     self._download_episode(episode)
                     count += 1
+                    current += 1
+                    if current >= max:
+                        break
 
         self._download_summary(count)
         return True
