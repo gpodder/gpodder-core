@@ -107,9 +107,9 @@ class ContentRange(object):
 
     def __init__(self, start, stop, length):
         if start < 0:
-            raise Exception("Bad start: %r" % start)
-        if not all(stop is None or (stop >= 0 and stop >= start)):
-            raise Exception("Bad stop: %r" % stop)
+            raise Exception("Bad start: {}, stop: {}, length: {}".format(str(start), str(stop), str(length)))
+        if stop is None or (stop >= 0 and stop <= start):
+            raise Exception("Bad stop: {}, start: {}, length: {}".format(str(stop), str(start), str(length)))
 
         self.start = start
         self.stop = stop
