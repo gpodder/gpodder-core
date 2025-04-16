@@ -39,26 +39,26 @@ def itunes_feed_handler(channel, max_episodes, config):
 
     logger.debug('Detected iTunes feed.')
 
-    itunes_lookup_url = 'https://itunes.apple.com/lookup?entity=podcast&id=' + m.group('podcast_id')
+    itunes_lookup_url = f'https://itunes.apple.com/lookup?entity=podcast&id={m.group("podcast_id")}'
     try:
         json_data = util.read_json(itunes_lookup_url)
 
         if len(json_data['results']) != 1:
-            raise ITunesFeedException('Unsupported number of results: ' + str(len(json_data['results'])))
+            raise ITunesFeedException(f'Unsupported number of results: {str(len(json_data["results"]))}')
 
         feed_url = util.normalize_feed_url(json_data['results'][0]['feedUrl'])
 
         if not feed_url:
-            raise ITunesFeedException('Could not resolve real feed URL from iTunes feed.\nDetected URL: ' + json_data['results'][0]['feedUrl'])
+            raise ITunesFeedException(f'Could not resolve real feed URL from iTunes feed.\nDetected URL: {json_data["results"][0]["feedUrl"]}')
 
-        logger.info('Resolved iTunes feed URL: {} -> {}'.format(channel.url, feed_url))
+        logger.info(f'Resolved iTunes feed URL: {channel.url} -> {feed_url}')
         channel.url = feed_url
 
         # Delegate further processing of the feed to the normal podcast parser
         # by returning None (will try the next handler in the resolver chain)
         return None
     except Exception as ex:
-        logger.warn('Cannot resolve iTunes feed: {}'.format(str(ex)))
+        logger.warn(f'Cannot resolve iTunes feed: {str(ex)}')
         raise
 
 @registry.directory.register_instance
@@ -69,6 +69,6 @@ class ApplePodcastsSearchProvider(directory.Provider):
         self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
-        json_url = 'https://itunes.apple.com/search?media=podcast&term={}'.format(urllib.parse.quote(query))
+        json_url = f'https://itunes.apple.com/search?media=podcast&term={urllib.parse.quote(query)}'
 
         return [directory.DirectoryEntry(entry['collectionName'], entry['feedUrl'], entry['artworkUrl100']) for entry in util.read_json(json_url)['results']]
