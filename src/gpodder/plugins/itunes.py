@@ -1,7 +1,6 @@
-
 #
 # gpodder.plugins.itunes: Resolve iTunes feed URLs (based on a gist by Yepoleb, 2014-03-09)
-# Copyright (c) 2014, Thomas Perl <m@thp.io>
+# Copyright (c) 2014-2025, Thomas Perl <m@thp.io>. E.S. Rosenberg (keeper-of-the-keys)
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +25,9 @@ import logging
 import urllib.parse
 
 logger = logging.getLogger(__name__)
+# 200 is the upper limit according to
+# https://performance-partners.apple.com/search-api
+PAGE_SIZE = 200
 
 class ITunesFeedException(Exception):
     pass
@@ -69,6 +71,30 @@ class ApplePodcastsSearchProvider(directory.Provider):
         self.priority = directory.Provider.PRIORITY_SECONDARY_SEARCH
 
     def on_search(self, query):
-        json_url = f'https://itunes.apple.com/search?media=podcast&term={urllib.parse.quote(query)}'
+        offset = 0
 
-        return [directory.DirectoryEntry(entry['collectionName'], entry['feedUrl'], entry['artworkUrl100']) for entry in util.read_json(json_url)['results']]
+        while True:
+            json_url = f'https://itunes.apple.com/search?media=podcast&term={urllib.parse.quote(query)}&limit={PAGE_SIZE}&offset={offset}'
+            json_data = util.read_json(json_url)
+
+            if json_data['resultCount'] > 0:
+                for entry in json_data['results']:
+                    if entry.get('feedUrl') is None:
+                        continue
+
+                    title = entry['collectionName']
+                    url = entry['feedUrl']
+                    image = entry['artworkUrl100']
+
+                    yield(directory.DirectoryEntry(title, url, image))
+                    returned_res += 1
+
+                offset = offset + json_data['resultCount']
+            else:
+            '''
+            Unlike the podverse stop condition where we detect a resultCount smaller than the page size for apple we can only stop when 0 results
+            are returned because the API seems to consistently return more than the page size and does this in an inconsistent fasion, most often
+            returning 210 results but based on my observartion any number between page size and page size + 10 is possible.
+            With an API that does not obey its own rules the only valid stop condition is no results.
+            '''
+                break
