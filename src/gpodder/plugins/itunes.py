@@ -1,6 +1,7 @@
 #
 # gpodder.plugins.itunes: Resolve iTunes feed URLs (based on a gist by Yepoleb, 2014-03-09)
-# Copyright (c) 2014-2025, Thomas Perl <m@thp.io>. E.S. Rosenberg (keeper-of-the-keys)
+# Copyright (c) 2014, Thomas Perl <m@thp.io>.
+# Copyright (c) 2025, E.S. Rosenberg (Keeper-of-the-Keys).
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +47,7 @@ def itunes_feed_handler(channel, max_episodes, config):
         json_data = util.read_json(itunes_lookup_url)
 
         if len(json_data['results']) != 1:
-            raise ITunesFeedException(f'Unsupported number of results: {str(len(json_data["results"]))}')
+            raise ITunesFeedException(f'Unsupported number of results: {len(json_data["results"])}')
 
         feed_url = util.normalize_feed_url(json_data['results'][0]['feedUrl'])
 
@@ -60,7 +61,7 @@ def itunes_feed_handler(channel, max_episodes, config):
         # by returning None (will try the next handler in the resolver chain)
         return None
     except Exception as ex:
-        logger.warn(f'Cannot resolve iTunes feed: {str(ex)}')
+        logger.warn(f'Cannot resolve iTunes feed: {ex}')
         raise
 
 @registry.directory.register_instance
@@ -86,10 +87,10 @@ class ApplePodcastsSearchProvider(directory.Provider):
                     url = entry['feedUrl']
                     image = entry['artworkUrl100']
 
-                    yield(directory.DirectoryEntry(title, url, image))
+                    yield directory.DirectoryEntry(title, url, image)
                     returned_res += 1
 
-                offset = offset + json_data['resultCount']
+                offset += json_data['resultCount']
             else:
             '''
             Unlike the podverse stop condition where we detect a resultCount smaller than the page size for apple we can only stop when 0 results
