@@ -97,7 +97,7 @@ class ApplePodcastsSearchProvider(directory.Provider):
 
             if json_data['resultCount'] > 0:
                 for entry in json_data['results']:
-                    if entry.get('feedUrl') is None:
+                    if 'feedUrl' not in entry:
                         continue
 
                     title = entry['collectionName']
