@@ -95,29 +95,17 @@ class ApplePodcastsSearchProvider(directory.Provider):
             )
             json_data = util.read_json(json_url)
 
-            if json_data['resultCount'] > 0:
-                for entry in json_data['results']:
-                    if 'feedUrl' not in entry:
-                        continue
+            if json_data['resultCount'] <= 0:
+                return
+                
+            for entry in json_data['results']:
+                if 'feedUrl' not in entry:
+                    continue
 
-                    title = entry['collectionName']
-                    url = entry['feedUrl']
-                    image = entry['artworkUrl100']
+                title = entry['collectionName']
+                url = entry['feedUrl']
+                image = entry['artworkUrl100']
 
-                    yield directory.DirectoryEntry(title, url, image)
-                    returned_res += 1
+                yield directory.DirectoryEntry(title, url, image)
 
-                offset += json_data['resultCount']
-            else:
-            # Unlike the podverse stop condition where we detect a resultCount
-            # smaller than the page size for apple we can only stop when 0
-            # results are returned because the API seems to consistently
-            # return more than the page size and does this in an inconsistent
-            # fasion, most often returning 210 results but based on my
-            # observartion any number between page size and page size + 10 is
-            # possible.
-            #
-            # With an API that does not obey its own rules the only valid stop
-            # condition is no results.
-
-                break
+            offset += json_data['resultCount']
