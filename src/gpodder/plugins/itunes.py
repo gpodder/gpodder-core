@@ -95,9 +95,11 @@ class ApplePodcastsSearchProvider(directory.Provider):
             )
             json_data = util.read_json(json_url)
 
+            # Due to the iTunes API not behaving like documented the stop
+            # condition is no further results returned.
             if json_data['resultCount'] <= 0:
                 return
-                
+
             for entry in json_data['results']:
                 if 'feedUrl' not in entry:
                     continue
