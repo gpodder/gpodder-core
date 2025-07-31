@@ -43,6 +43,7 @@ defaults = {
         'downloads': {
             'enabled': True,
             'concurrent': 1,
+            'podcast_max_new': 200,       # per podcast download limit same as episode limit
         },
         'episodes': 200,  # max episodes per feed
     },
