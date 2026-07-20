@@ -155,7 +155,7 @@ class Config(object):
         if callback not in self.__observers:
             self.__observers.append(callback)
         else:
-            logger.warn('Observer already added: %s', repr(callback))
+            logger.warning('Observer already added: %s', repr(callback))
 
     def remove_observer(self, callback):
         """
@@ -164,7 +164,7 @@ class Config(object):
         if callback in self.__observers:
             self.__observers.remove(callback)
         else:
-            logger.warn('Observer not added: %s', repr(callback))
+            logger.warning('Observer not added: %s', repr(callback))
 
     def all_keys(self):
         return self.__json_config._keys_iter()
@@ -208,7 +208,7 @@ class Config(object):
                 data = open(self.__filename, 'rt').read()
                 new_keys_added = self.__json_config._restore(data)
             except:
-                logger.warn('Cannot parse config file: %s', self.__filename, exc_info=True)
+                logger.warning('Cannot parse config file: %s', self.__filename, exc_info=True)
                 new_keys_added = False
 
             if new_keys_added:
