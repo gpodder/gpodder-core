@@ -60,13 +60,13 @@ import locale
 try:
     locale.setlocale(locale.LC_ALL, '')
 except Exception as e:
-    logger.warn('Cannot set locale (%s)', e, exc_info=True)
+    logger.warning('Cannot set locale (%s)', e, exc_info=True)
 
 try:
     import platform
     win32 = (platform.system() == 'Windows')
 except Exception as e:
-    logger.warn('Cannot determine platform (%s)', e, exc_info=True)
+    logger.warning('Cannot determine platform (%s)', e, exc_info=True)
     win32 = False
 
 # Native filesystem encoding detection
@@ -137,7 +137,7 @@ def make_directory(path):
     try:
         os.makedirs(path)
     except:
-        logger.warn('Could not create directory: %s', path)
+        logger.warning('Could not create directory: %s', path)
         return False
 
     return True
@@ -293,9 +293,9 @@ def calculate_size(path):
                 try:
                     sum += calculate_size(os.path.join(path, item))
                 except:
-                    logger.warn('Cannot get size for %s', path, exc_info=True)
+                    logger.warning('Cannot get size for %s', path, exc_info=True)
         except:
-            logger.warn('Cannot access %s', path, exc_info=True)
+            logger.warning('Cannot access %s', path, exc_info=True)
 
         return sum
 
@@ -319,7 +319,7 @@ def file_modification_datetime(filename):
         timestamp = s[stat.ST_MTIME]
         return datetime.datetime.fromtimestamp(timestamp)
     except:
-        logger.warn('Cannot get mtime for %s', filename, exc_info=True)
+        logger.warning('Cannot get mtime for %s', filename, exc_info=True)
         return None
 
 
@@ -350,13 +350,13 @@ def format_date(timestamp):
     try:
         timestamp_date = time.localtime(timestamp)[:3]
     except ValueError as ve:
-        logger.warn('Cannot convert timestamp', exc_info=True)
+        logger.warning('Cannot convert timestamp', exc_info=True)
         return None
 
     try:
         diff = int((time.time() - timestamp)/seconds_in_a_day)
     except:
-        logger.warn('Cannot convert "%s" to date.', timestamp, exc_info=True)
+        logger.warning('Cannot convert "%s" to date.', timestamp, exc_info=True)
         return None
 
     try:
@@ -381,7 +381,7 @@ def delete_file(filename):
     try:
         os.remove(filename)
     except Exception as e:
-        logger.warn('Cannot delete file: %s', filename, exc_info=True)
+        logger.warning('Cannot delete file: %s', filename, exc_info=True)
 
 
 def remove_html_tags(html):
@@ -816,7 +816,7 @@ def update_file_safely(target_filename):
     try:
         yield tmp_filename
     except Exception as e:
-        logger.warn('Exception while atomic-saving file: %s', e, exc_info=True)
+        logger.warning('Exception while atomic-saving file: %s', e, exc_info=True)
         delete_file(tmp_filename)
         raise
 
