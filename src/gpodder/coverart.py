@@ -81,7 +81,7 @@ class CoverDownloader(object):
                 logger.info('Downloading cover art: %s', cover_url)
                 data = util.urlopen(cover_url, timeout=self.TIMEOUT).read()
             except Exception as e:
-                logger.warn('Cover art download failed: %s', e)
+                logger.warning('Cover art download failed: %s', e)
                 return None
 
             try:
@@ -103,7 +103,7 @@ class CoverDownloader(object):
 
                 return 'file://' + filename + extension
             except Exception as e:
-                logger.warn('Cannot save cover art', exc_info=True)
+                logger.warning('Cannot save cover art', exc_info=True)
         else:
             return cover_url
 
